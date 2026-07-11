@@ -37,16 +37,27 @@ access to this machine or mount the Podman socket into a build.
 
 The publisher GitHub App needs only repository `Contents: read/write` and `Pull
 requests: read/write`, and must be installed only on `tine-plugin-registry`.
-Store its downloaded private key as mode 600, fill in
-`publisher-config.local.toml`, then schedule `publisher_daemon.py --once` under a
-separate lock. It creates short-lived installation tokens on demand; there is no
-PAT to retain or rotate.
+The loopback-only manifest helper removes the error-prone key download and App-ID
+copying steps:
+
+```sh
+python3 auditor/bootstrap_github_app.py
+```
+
+Open the printed `127.0.0.1` URL, review and create the private App on GitHub,
+then install it using **Only select repositories** with only
+`tine-plugin-registry` selected. The helper persists only the App ID/slug and
+private key; it discards GitHub's generated client and webhook secrets. The key
+and metadata are created atomically as mode 600 and existing files are never
+overwritten. Fill in `publisher-config.local.toml`, then schedule
+`publisher_daemon.py --once` under a separate lock. It creates short-lived
+installation tokens on demand; there is no PAT to retain or rotate.
 
 On GitHub, create the App with no webhook, no user authorization, and no account
 permissions. Grant repository `Contents: read/write` and `Pull requests:
-read/write`, install it only on `martinkoutecky/tine-plugin-registry`, then record
-the App ID and installation ID. The checked-in cron and systemd examples keep the
-credential-free auditor and privileged publisher in separate processes.
+read/write`, and install it only on `martinkoutecky/tine-plugin-registry`. The
+checked-in cron and systemd examples keep the credential-free auditor and
+privileged publisher in separate processes.
 
 The checked-in `registry-ed25519.pub.pem` is the dedicated registry identity. The
 private key stays mode-600 outside every repository. Tine must verify `index.json.sig`
