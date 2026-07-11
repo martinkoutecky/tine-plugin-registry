@@ -49,9 +49,19 @@ then install it using **Only select repositories** with only
 `tine-plugin-registry` selected. The helper persists only the App ID/slug and
 private key; it discards GitHub's generated client and webhook secrets. The key
 and metadata are created atomically as mode 600 and existing files are never
-overwritten. Fill in `publisher-config.local.toml`, then schedule
+overwritten. After installation, verify the live App identity, permissions, and
+installation-token repository scope and create the local configuration with:
+
+```sh
+python3 auditor/configure_publisher.py
+```
+
+Then schedule
 `publisher_daemon.py --once` under a separate lock. It creates short-lived
-installation tokens on demand; there is no PAT to retain or rotate.
+installation tokens on demand; there is no PAT to retain or rotate. Each cycle
+atomically updates `~/.local/state/tine-plugin-auditor/publisher-status.json`
+with only its timestamp and aggregate pending/published/quarantined/failure
+counts, so the schedule is observable without logging credentials or source.
 
 For a remote machine, choose a fixed loopback port and forward that same port
 over SSH, for example `--port 39401` with an SSH local forward from local

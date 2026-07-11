@@ -36,10 +36,15 @@ class GithubAppTests(unittest.TestCase):
 
     def test_installation_token_is_checked_for_shape_and_expiry(self):
         expiry = (datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)).isoformat()
-        with mock.patch.object(github_app, "github_json", return_value={"token": "x" * 40, "expires_at": expiry}):
+        response = {"token": "x" * 40, "expires_at": expiry, "permissions": {"contents": "write"}}
+        with mock.patch.object(github_app, "github_json", return_value=response):
             with mock.patch.object(github_app, "app_jwt", return_value="jwt"):
                 self.assertEqual(github_app.installation_token(1, 2, pathlib.Path("key")), "x" * 40)
-        with mock.patch.object(github_app, "github_json", return_value={"token": "short", "expires_at": expiry}):
+        with mock.patch.object(
+            github_app,
+            "github_json",
+            return_value={"token": "short", "expires_at": expiry, "permissions": {}},
+        ):
             with mock.patch.object(github_app, "app_jwt", return_value="jwt"):
                 with self.assertRaises(RuntimeError):
                     github_app.installation_token(1, 2, pathlib.Path("key"))

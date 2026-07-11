@@ -51,7 +51,11 @@ def github_json(url: str, method: str, bearer: str, body: object | None = None) 
         return json.loads(data) if data else {}
 
 
-def installation_token(app_id: int, installation_id: int, private_key: pathlib.Path) -> str:
+def installation_credentials(
+    app_id: int,
+    installation_id: int,
+    private_key: pathlib.Path,
+) -> tuple[str, dict, list | None]:
     jwt = app_jwt(app_id, private_key)
     result = github_json(
         f"https://api.github.com/app/installations/{installation_id}/access_tokens",
@@ -66,4 +70,14 @@ def installation_token(app_id: int, installation_id: int, private_key: pathlib.P
     expiry = datetime.datetime.fromisoformat(expires.replace("Z", "+00:00"))
     if expiry <= datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=5):
         raise RuntimeError("GitHub App returned an unexpectedly short-lived token")
-    return token
+    permissions = result.get("permissions")
+    repositories = result.get("repositories")
+    if not isinstance(permissions, dict):
+        raise RuntimeError("GitHub App token did not report its effective permissions")
+    if repositories is not None and not isinstance(repositories, list):
+        raise RuntimeError("GitHub App token reported invalid repository scope")
+    return token, permissions, repositories
+
+
+def installation_token(app_id: int, installation_id: int, private_key: pathlib.Path) -> str:
+    return installation_credentials(app_id, installation_id, private_key)[0]
