@@ -28,6 +28,7 @@ def envelope(plugin_id="page.tine.example"):
     return {
         "format": "tine-plugin-audit-result/v1",
         "disposition": "publish",
+        "commitVerified": "a" * 40,
         "submission": {
             "schemaVersion": 1,
             "pluginId": plugin_id,
@@ -37,7 +38,13 @@ def envelope(plugin_id="page.tine.example"):
             "manifestPath": "manifest.json",
         },
         "checker": {"status": "passed", "risk": "low", "checkedAt": "2026-07-11T00:00:00Z"},
-        "aiReview": {"disposition": "pass", "uncertain": False},
+        "aiReview": {
+            "disposition": "pass",
+            "uncertain": False,
+            "summary": "No security-relevant behavior found.",
+            "findings": [],
+            "areasReviewed": ["manifest and guest imports"],
+        },
         "package": {
             "manifest": manifest,
             "manifestSha256": hashlib.sha256(canonical(manifest)).hexdigest(),
@@ -88,6 +95,17 @@ class PublisherSecurityTests(unittest.TestCase):
         bad_digest["package"]["sha256"] = "0" * 64
         with self.assertRaisesRegex(RuntimeError, "WASM digest"):
             publish(self.write_envelope(bad_digest), self.repo, self.key)
+
+    def test_publisher_rejects_a_report_tine_cannot_verify(self):
+        bad_commit = envelope()
+        bad_commit["commitVerified"] = "b" * 40
+        with self.assertRaisesRegex(ValueError, "verified source commit"):
+            publish(self.write_envelope(bad_commit), self.repo, self.key)
+
+        missing_evidence = envelope()
+        del missing_evidence["aiReview"]["areasReviewed"]
+        with self.assertRaisesRegex(ValueError, "review areas"):
+            publish(self.write_envelope(missing_evidence), self.repo, self.key)
 
     def test_private_credentials_must_not_be_group_or_world_readable(self):
         self.key.chmod(0o644)

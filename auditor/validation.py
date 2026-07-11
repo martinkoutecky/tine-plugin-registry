@@ -9,6 +9,8 @@ VERSION = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-
 REPOSITORY = re.compile(r"^https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:\.git)?$")
 COMMIT = re.compile(r"^[0-9a-f]{40}$")
 SUBMISSION_FIELDS = {"schemaVersion", "pluginId", "version", "repository", "commit", "manifestPath"}
+AUDIT_RISKS = {"low", "review", "elevated"}
+FINDING_SEVERITIES = {"info", "low", "medium", "high", "critical"}
 
 
 def validate_submission(value: object) -> dict:
@@ -41,6 +43,64 @@ def validate_manifest_identity(manifest: object, submission: dict) -> dict:
     if manifest.get("id") != submission["pluginId"] or manifest.get("version") != submission["version"]:
         raise ValueError("manifest identity does not match the immutable submission")
     return manifest
+
+
+def validate_publishable_audit(envelope: object, submission: dict) -> dict:
+    """Validate every public audit field before it can enter a signed index."""
+    if not isinstance(envelope, dict) or envelope.get("format") != "tine-plugin-audit-result/v1":
+        raise ValueError("audit result format is invalid")
+    if envelope.get("disposition") not in {"publish", "quarantine"}:
+        raise ValueError("audit disposition is not publishable")
+    if envelope.get("commitVerified") != submission["commit"]:
+        raise ValueError("verified source commit does not match submission")
+
+    checker = envelope.get("checker")
+    if not isinstance(checker, dict) or checker.get("status") != "passed":
+        raise ValueError("deterministic audit did not pass")
+    if checker.get("risk") not in AUDIT_RISKS:
+        raise ValueError("audit risk is invalid")
+    if not isinstance(checker.get("checkedAt"), str) or not checker["checkedAt"]:
+        raise ValueError("audit timestamp is invalid")
+
+    ai = envelope.get("aiReview")
+    if not isinstance(ai, dict) or ai.get("disposition") != "pass" or ai.get("uncertain") is not False:
+        raise ValueError("AI source review is not a certain pass")
+    if not isinstance(ai.get("summary"), str) or not ai["summary"]:
+        raise ValueError("AI source review summary is invalid")
+    findings = ai.get("findings")
+    if not isinstance(findings, list) or len(findings) > 50:
+        raise ValueError("AI source review findings are invalid")
+    for finding in findings:
+        if (
+            not isinstance(finding, dict)
+            or finding.get("severity") not in FINDING_SEVERITIES
+            or not isinstance(finding.get("title"), str)
+            or not finding["title"]
+            or not isinstance(finding.get("impact"), str)
+            or not finding["impact"]
+        ):
+            raise ValueError("AI source review finding is invalid")
+    areas = ai.get("areasReviewed")
+    if (
+        not isinstance(areas, list)
+        or len(areas) > 100
+        or any(not isinstance(area, str) or not area for area in areas)
+    ):
+        raise ValueError("AI source review areas are invalid")
+
+    approval = envelope.get("manualApproval")
+    if approval is not None and (
+        not isinstance(approval, dict)
+        or approval.get("by") != "Sol (working on Martin's behalf)"
+        or not isinstance(approval.get("note"), str)
+        or not approval["note"]
+        or not isinstance(approval.get("approvedAt"), str)
+        or not approval["approvedAt"]
+    ):
+        raise ValueError("manual approval is invalid")
+    if envelope["disposition"] == "quarantine" and approval is None:
+        raise ValueError("quarantined audit requires explicit manual approval")
+    return envelope
 
 
 def validate_source_tree(root: pathlib.Path, max_bytes: int = 4 * 1024 * 1024, max_files: int = 5_000) -> None:

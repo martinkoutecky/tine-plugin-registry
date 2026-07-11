@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 import tomllib
 from github_app import github_json, installation_token
-from validation import validate_manifest_identity, validate_submission
+from validation import validate_manifest_identity, validate_publishable_audit, validate_submission
 
 
 def canonical(value: object) -> bytes:
@@ -119,6 +119,7 @@ def publish(
     if disposition != "publish":
         return disposition, quarantine_comment(envelope, disposition), pr
     submission = validate_submission(envelope["submission"])
+    validate_publishable_audit(envelope, submission)
     package = envelope["package"]
     pid, version = submission["pluginId"], submission["version"]
     manifest = validate_manifest_identity(package["manifest"], submission)
