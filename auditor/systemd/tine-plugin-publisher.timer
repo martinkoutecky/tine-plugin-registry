@@ -1,0 +1,11 @@
+[Unit]
+Description=Process completed Tine plugin audits every two minutes
+
+[Timer]
+OnBootSec=2m
+OnUnitActiveSec=2m
+Persistent=true
+RandomizedDelaySec=20
+
+[Install]
+WantedBy=timers.target

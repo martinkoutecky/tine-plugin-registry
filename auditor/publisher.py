@@ -7,10 +7,11 @@ import base64
 import datetime
 import hashlib
 import json
-import os
 import pathlib
 import subprocess
+import tempfile
 import tomllib
+from github_app import github_json, installation_token
 from validation import validate_manifest_identity, validate_submission
 
 
@@ -20,6 +21,65 @@ def canonical(value: object) -> bytes:
 
 def run(command: list[str], **kwargs) -> subprocess.CompletedProcess:
     return subprocess.run(command, check=True, text=True, **kwargs)
+
+
+def git(repo: pathlib.Path, args: list[str], **kwargs) -> subprocess.CompletedProcess:
+    return run(["git", "-c", "core.hooksPath=/dev/null", "-C", str(repo), *args], **kwargs)
+
+
+def private_file(path: pathlib.Path, label: str) -> pathlib.Path:
+    if not path.is_file() or path.stat().st_mode & 0o077:
+        raise RuntimeError(f"{label} must be a mode-600 private file")
+    return path
+
+
+def push_with_token(repo: pathlib.Path, repository: str, token: str) -> None:
+    with tempfile.TemporaryDirectory(prefix="tine-plugin-publisher-") as temp:
+        askpass = pathlib.Path(temp) / "askpass.sh"
+        askpass.write_text(
+            "#!/bin/sh\n"
+            "case \"$1\" in\n"
+            "  *Username*) printf '%s\\n' 'x-access-token' ;;\n"
+            "  *) printf '%s\\n' \"$TINE_GITHUB_TOKEN\" ;;\n"
+            "esac\n"
+        )
+        askpass.chmod(0o700)
+        env = {
+            "PATH": "/usr/local/bin:/usr/bin:/bin",
+            "HOME": "/nonexistent",
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "GIT_CONFIG_GLOBAL": "/dev/null",
+            "GIT_TERMINAL_PROMPT": "0",
+            "GIT_ASKPASS": str(askpass),
+            "TINE_GITHUB_TOKEN": token,
+        }
+        run(
+            [
+                "git", "-c", "core.hooksPath=/dev/null", "-c", "credential.helper=",
+                "-C", str(repo), "push", f"https://github.com/{repository}.git", "HEAD:main",
+            ],
+            env=env,
+        )
+
+
+def quarantine_comment(envelope: dict, disposition: str) -> str:
+    checker = envelope.get("checker", {})
+    ai = envelope.get("aiReview", {})
+    lines = [
+        f"Automated audit result: **{disposition}**.",
+        "",
+        f"- Deterministic checks: `{checker.get('status', 'unknown')}`",
+        f"- Capability risk: `{checker.get('risk', 'unknown')}`",
+        f"- AI source review: `{ai.get('disposition', 'unknown')}` (uncertain: `{bool(ai.get('uncertain', True))}`)",
+    ]
+    findings = ai.get("findings", []) if isinstance(ai, dict) else []
+    if findings:
+        lines.extend(["", "Review findings:"])
+        for finding in findings[:10]:
+            if isinstance(finding, dict):
+                lines.append(f"- **{finding.get('severity', 'unknown')}** — {finding.get('title', 'Untitled finding')}")
+    lines.extend(["", "No code was published. A maintainer can review the quarantined envelope locally."])
+    return "\n".join(lines)
 
 
 def publish(
@@ -37,14 +97,27 @@ def publish(
         ai = envelope.get("aiReview", {})
         if checker.get("status") != "passed" or ai.get("disposition") != "pass" or ai.get("uncertain"):
             raise RuntimeError("manual approval requires deterministic pass and certain AI pass")
-        envelope["manualApproval"] = {
-            "by": "Sol (working on Martin's behalf)",
-            "note": approval_note,
-            "approvedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        }
+        existing_approval = envelope.get("manualApproval")
+        if existing_approval is not None:
+            if (
+                not isinstance(existing_approval, dict)
+                or existing_approval.get("by") != "Sol (working on Martin's behalf)"
+                or existing_approval.get("note") != approval_note
+                or not isinstance(existing_approval.get("approvedAt"), str)
+            ):
+                raise RuntimeError("stored manual approval does not match this approval request")
+        else:
+            envelope["manualApproval"] = {
+                "by": "Sol (working on Martin's behalf)",
+                "note": approval_note,
+                "approvedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            }
+            # Persist the approval identity/timestamp before any network action so
+            # a failed push can be retried without changing immutable audit bytes.
+            envelope_path.write_bytes(canonical(envelope))
         disposition = "publish"
     if disposition != "publish":
-        return disposition, "Automated audit quarantined this version. See the attached structured report.", pr
+        return disposition, quarantine_comment(envelope, disposition), pr
     submission = validate_submission(envelope["submission"])
     package = envelope["package"]
     pid, version = submission["pluginId"], submission["version"]
@@ -108,7 +181,8 @@ def main() -> None:
     parser.add_argument("--approval-note", default="")
     args = parser.parse_args()
     config = tomllib.loads(args.config.read_text())
-    repo, key = pathlib.Path(config["registry_checkout"]), pathlib.Path(config["signing_key"])
+    repo = pathlib.Path(config["registry_checkout"])
+    key = private_file(pathlib.Path(config["signing_key"]), "registry signing key")
     disposition, comment, pr = publish(
         args.envelope,
         repo,
@@ -116,14 +190,25 @@ def main() -> None:
         approve_quarantine=args.approve_quarantine,
         approval_note=args.approval_note,
     )
-    env = {"PATH": os.environ.get("PATH", ""), "HOME": os.environ.get("HOME", ""), "GH_CONFIG_DIR": config["publisher_gh_config_dir"], "GH_PROMPT_DISABLED": "1"}
     if disposition == "published":
-        run(["git", "-C", str(repo), "add", "index.json", "index.json.sig", "packages", "audits"])
-        if subprocess.run(["git", "-C", str(repo), "diff", "--cached", "--quiet"]).returncode != 0:
-            run(["git", "-C", str(repo), "commit", "-m", "registry: publish audited submission"])
-            run(["git", "-C", str(repo), "push", "origin", "main"], env=env)
+        git(repo, ["add", "index.json", "index.json.sig", "packages", "audits"])
+        if subprocess.run(
+            ["git", "-c", "core.hooksPath=/dev/null", "-C", str(repo), "diff", "--cached", "--quiet"]
+        ).returncode != 0:
+            git(repo, ["commit", "-m", "registry: publish audited submission"])
+        app_key = private_file(pathlib.Path(config["github_app_private_key"]), "GitHub App private key")
+        token = installation_token(int(config["github_app_id"]), int(config["github_installation_id"]), app_key)
+        push_with_token(repo, config["registry"], token)
     if pr is not None:
-        run(["gh", "pr", "comment", str(pr), "--repo", config["registry"], "--body", comment], env=env)
+        if disposition != "published":
+            app_key = private_file(pathlib.Path(config["github_app_private_key"]), "GitHub App private key")
+            token = installation_token(int(config["github_app_id"]), int(config["github_installation_id"]), app_key)
+        github_json(
+            f"https://api.github.com/repos/{config['registry']}/issues/{pr}/comments",
+            "POST",
+            token,
+            {"body": comment},
+        )
 
 
 if __name__ == "__main__":

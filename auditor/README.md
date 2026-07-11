@@ -13,7 +13,8 @@ polls only this registry, leases immutable submissions, and has three boundaries
    config/rules ignored and shell, unified exec, apps, browser, computer-use, and
    plugins disabled. The model has no source checkout or tool path to credentials.
 4. A separately configured publisher consumes structured result envelopes from an
-   outgoing spool. Its GitHub identity can update only this registry; its Ed25519
+   outgoing spool. It mints one-hour tokens from a GitHub App installed only on
+   this registry; its Ed25519
    key signs `index.json` after deterministic canonical serialization. The signed
    index pins separate SHA-256 digests for both the manifest and WASM bytes.
 
@@ -33,6 +34,19 @@ python3 scripts/validate-index.py
 Install the two user-level service/timer files only after assigning a narrow
 publisher credential. Never give a public-PR workflow
 access to this machine or mount the Podman socket into a build.
+
+The publisher GitHub App needs only repository `Contents: read/write` and `Pull
+requests: read/write`, and must be installed only on `tine-plugin-registry`.
+Store its downloaded private key as mode 600, fill in
+`publisher-config.local.toml`, then schedule `publisher_daemon.py --once` under a
+separate lock. It creates short-lived installation tokens on demand; there is no
+PAT to retain or rotate.
+
+On GitHub, create the App with no webhook, no user authorization, and no account
+permissions. Grant repository `Contents: read/write` and `Pull requests:
+read/write`, install it only on `martinkoutecky/tine-plugin-registry`, then record
+the App ID and installation ID. The checked-in cron and systemd examples keep the
+credential-free auditor and privileged publisher in separate processes.
 
 The checked-in `registry-ed25519.pub.pem` is the dedicated registry identity. The
 private key stays mode-600 outside every repository. Tine must verify `index.json.sig`

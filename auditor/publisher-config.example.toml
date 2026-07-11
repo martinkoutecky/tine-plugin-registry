@@ -1,4 +1,9 @@
 registry = "martinkoutecky/tine-plugin-registry"
 registry_checkout = "/aux/koutecky/logseq/tine-plugin-registry"
 signing_key = "/home/koutecky/.config/tine-plugin-auditor/registry-ed25519.pem"
-publisher_gh_config_dir = "/home/koutecky/.config/gh-tine-plugin-publisher"
+github_app_id = 123456
+github_installation_id = 78901234
+github_app_private_key = "/home/koutecky/.config/tine-plugin-auditor/github-app.pem"
+spool_in = "/home/koutecky/.local/state/tine-plugin-auditor/outgoing"
+spool_processed = "/home/koutecky/.local/state/tine-plugin-auditor/processed"
+spool_quarantine = "/home/koutecky/.local/state/tine-plugin-auditor/quarantine"

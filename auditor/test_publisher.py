@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 import unittest
 
-from publisher import canonical, publish
+from publisher import canonical, private_file, publish
 
 
 def envelope(plugin_id="page.tine.example"):
@@ -85,6 +85,22 @@ class PublisherSecurityTests(unittest.TestCase):
         bad_digest["package"]["sha256"] = "0" * 64
         with self.assertRaisesRegex(RuntimeError, "WASM digest"):
             publish(self.write_envelope(bad_digest), self.repo, self.key)
+
+    def test_private_credentials_must_not_be_group_or_world_readable(self):
+        self.key.chmod(0o644)
+        with self.assertRaisesRegex(RuntimeError, "mode-600"):
+            private_file(self.key, "test key")
+        self.key.chmod(0o600)
+        self.assertEqual(private_file(self.key, "test key"), self.key)
+
+    def test_manual_approval_is_persisted_for_idempotent_push_retries(self):
+        value = envelope()
+        value["disposition"] = "quarantine"
+        path = self.write_envelope(value)
+        publish(path, self.repo, self.key, approve_quarantine=True, approval_note="reviewed")
+        first = json.loads(path.read_text())["manualApproval"]
+        publish(path, self.repo, self.key, approve_quarantine=True, approval_note="reviewed")
+        self.assertEqual(json.loads(path.read_text())["manualApproval"], first)
 
 
 if __name__ == "__main__":

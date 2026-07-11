@@ -1,0 +1,5 @@
+PATH=/home/koutecky/bin:/usr/local/bin:/usr/bin:/bin
+CODEX_BIN=/home/koutecky/bin/codex
+
+*/5 * * * * /usr/bin/flock -n /tmp/tine-plugin-auditor.lock /usr/bin/python3 /aux/koutecky/logseq/tine-plugin-registry/auditor/daemon.py --once --config /aux/koutecky/logseq/tine-plugin-registry/auditor/config.local.toml >> /home/koutecky/.local/state/tine-plugin-auditor/auditor.log 2>&1
+*/2 * * * * /usr/bin/flock -n /tmp/tine-plugin-publisher.lock /usr/bin/python3 /aux/koutecky/logseq/tine-plugin-registry/auditor/publisher_daemon.py --once --config /aux/koutecky/logseq/tine-plugin-registry/auditor/publisher-config.local.toml >> /home/koutecky/.local/state/tine-plugin-auditor/publisher.log 2>&1
