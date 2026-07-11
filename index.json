@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-11T06:33:23.720669+00:00",
+  "generatedAt": "2026-07-11T06:33:54.848255+00:00",
   "plugins": [
     {
       "aiDevelopment": "primary",
@@ -28,6 +28,37 @@
           "sha256": "781889abcb030f058da5fadf25eb157af7e8e16fe1826df817f762517fa2b694",
           "version": "0.1.0",
           "wasmUrl": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/packages/page.tine.bullet-threading/0.1.0/plugin.wasm"
+        }
+      ]
+    },
+    {
+      "aiDevelopment": "primary",
+      "description": "Add a hide-completed formula filter to the focused query table or board.",
+      "id": "page.tine.query-filter",
+      "license": "MIT",
+      "name": "Query filter shortcuts",
+      "source": "https://github.com/martinkoutecky/tine-plugin-query-filter",
+      "versions": [
+        {
+          "apiVersion": "0.1",
+          "audit": {
+            "status": "passed",
+            "url": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/audits/page.tine.query-filter/0.1.0.json"
+          },
+          "capabilities": [
+            "commands.register",
+            "graph.write.block"
+          ],
+          "manifestUrl": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/packages/page.tine.query-filter/0.1.0/manifest.json",
+          "platforms": [
+            "desktop",
+            "android",
+            "ios"
+          ],
+          "publishedAt": "2026-07-11T06:33:54.848244+00:00",
+          "sha256": "b4c73358abe5535fc450f02b0b445f607294044cf0c9c470b740f120b2a93626",
+          "version": "0.1.0",
+          "wasmUrl": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/packages/page.tine.query-filter/0.1.0/plugin.wasm"
         }
       ]
     }
