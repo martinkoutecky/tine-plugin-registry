@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-11T07:32:47+00:00",
+  "generatedAt": "2026-07-11T16:48:49.229447+00:00",
   "plugins": [
     {
       "aiDevelopment": "primary",
@@ -71,6 +71,33 @@
           "sha256": "b4c73358abe5535fc450f02b0b445f607294044cf0c9c470b740f120b2a93626",
           "version": "0.1.0",
           "wasmUrl": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/packages/page.tine.query-filter/0.1.0/plugin.wasm"
+        },
+        {
+          "apiVersion": "0.1",
+          "audit": {
+            "automatedDisposition": "quarantine",
+            "checkedAt": "2026-07-11T16:47:26.780Z",
+            "manualApproval": true,
+            "risk": "review",
+            "sha256": "e9af5a8f472a0d0fe39a9a3edfde98380e4bbcd9cd50e45bc6e524837b8210d3",
+            "status": "passed",
+            "url": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/audits/page.tine.query-filter/0.1.1.json"
+          },
+          "capabilities": [
+            "commands.register",
+            "graph.write.block"
+          ],
+          "manifestSha256": "51d00252157730caacc00d05a5c24f17529fe95cd5139b7b2758427e9bdc1612",
+          "manifestUrl": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/packages/page.tine.query-filter/0.1.1/manifest.json",
+          "platforms": [
+            "desktop",
+            "android",
+            "ios"
+          ],
+          "publishedAt": "2026-07-11T16:48:49.229434+00:00",
+          "sha256": "9412539304763c8b2e0bff76f4c656b8a28c064bdaf942bf0177bfc1a0e5282b",
+          "version": "0.1.1",
+          "wasmUrl": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/packages/page.tine.query-filter/0.1.1/plugin.wasm"
         }
       ]
     }

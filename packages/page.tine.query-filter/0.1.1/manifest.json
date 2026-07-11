@@ -1,0 +1,31 @@
+{
+  "aiDevelopment": "primary",
+  "apiVersion": "0.1",
+  "author": "Martin Koutecký",
+  "capabilities": [
+    "commands.register",
+    "graph.write.block"
+  ],
+  "contributions": {
+    "commands": [
+      {
+        "description": "Hide DONE, CANCELED, and CANCELLED rows in the focused query table or board.",
+        "id": "hide-completed",
+        "title": "Query view: hide completed rows"
+      }
+    ]
+  },
+  "description": "Add a hide-completed formula filter to the focused query table or board.",
+  "entry": "target/wasm32-unknown-unknown/release/tine_plugin_query_filter.wasm",
+  "id": "page.tine.query-filter",
+  "license": "MIT",
+  "name": "Query filter shortcuts",
+  "platforms": [
+    "desktop",
+    "android",
+    "ios"
+  ],
+  "schemaVersion": 1,
+  "source": "https://github.com/martinkoutecky/tine-plugin-query-filter",
+  "version": "0.1.1"
+}

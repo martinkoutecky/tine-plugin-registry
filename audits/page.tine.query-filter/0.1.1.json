@@ -1,0 +1,107 @@
+{
+  "aiReview": {
+    "areasReviewed": [
+      "manifest and contribution/source consistency",
+      "declared capabilities and emitted effects",
+      "focused-block targeting and graph transformation semantics",
+      "legacy-filter migration and idempotence",
+      "WebAssembly imports, exports, and bounded-memory configuration",
+      "SDK ABI, protocol validation, allocation, and serialization",
+      "dependency pinning, lockfiles, and build provenance",
+      "denial of service and resource exhaustion",
+      "hidden channels, ambient authority, and protocol abuse",
+      "README claims against implementation"
+    ],
+    "disposition": "pass",
+    "findings": [
+      {
+        "evidence": "The SDK's tine_alloc allocates and forgets a buffer for the host-provided length. When tine_handle receives a length above MAX_MESSAGE_BYTES, it rejects the event without reconstructing and freeing that allocation. Repeated oversized calls can therefore consume the imported memory until allocation traps.",
+        "impact": "A hostile or malfunctioning host event stream could stop this plugin instance. The 16 MiB maximum imported memory bounds the damage, and the plugin has no imports enabling filesystem, network, credential, or other ambient access.",
+        "severity": "low",
+        "title": "Oversized events can exhaust the plugin's bounded memory"
+      },
+      {
+        "evidence": "is_query_view accepts any focused block whose raw text contains \"{{query\" and has a trimmed line exactly equal to \"tine.view:: table\" or \"tine.view:: board\".",
+        "impact": "Unusual text containing those markers could be treated as a query view and receive the filter line. The mutation remains limited to the focused block, is command-triggered, and includes expected_raw conflict protection.",
+        "severity": "info",
+        "title": "Query-view recognition is syntactic rather than structural"
+      }
+    ],
+    "schemaVersion": 1,
+    "summary": "The plugin's declared purpose, manifest capabilities, source behavior, locked SDK, and reported WebAssembly imports are consistent. It only emits a conflict-checked replacement of the explicitly focused block for the registered command, adding or upgrading the documented filter. No ambient authority, covert channel, deceptive behavior, or unsupported graph access was found. A bounded plugin-local denial-of-service issue exists in the SDK input path but does not threaten graph data or grant additional capabilities.",
+    "uncertain": false
+  },
+  "checker": {
+    "checkedAt": "2026-07-11T16:47:26.780Z",
+    "errors": [],
+    "format": "tine-plugin-check/v1",
+    "plugin": {
+      "id": "page.tine.query-filter",
+      "name": "Query filter shortcuts",
+      "version": "0.1.1"
+    },
+    "provenance": {
+      "artifactBuiltFromThatCheckout": true,
+      "artifactSha256": "9412539304763c8b2e0bff76f4c656b8a28c064bdaf942bf0177bfc1a0e5282b",
+      "buildNetwork": "none",
+      "dependencyFetchHadNoCredentials": true,
+      "sourceCommit": "92f9acd461a884fa3f3316527e526071bfc5d5e9"
+    },
+    "risk": "review",
+    "status": "passed",
+    "warnings": [],
+    "wasm": {
+      "bytes": 146583,
+      "exports": [
+        {
+          "kind": "function",
+          "name": "tine_alloc"
+        },
+        {
+          "kind": "function",
+          "name": "tine_handle"
+        },
+        {
+          "kind": "function",
+          "name": "tine_result_len"
+        },
+        {
+          "kind": "global",
+          "name": "__data_end"
+        },
+        {
+          "kind": "global",
+          "name": "__heap_base"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "memory",
+          "module": "env",
+          "name": "memory"
+        }
+      ],
+      "sha256": "9412539304763c8b2e0bff76f4c656b8a28c064bdaf942bf0177bfc1a0e5282b"
+    }
+  },
+  "commitVerified": "92f9acd461a884fa3f3316527e526071bfc5d5e9",
+  "disposition": "quarantine",
+  "format": "tine-plugin-audit-result/v1",
+  "manualApproval": {
+    "approvedAt": "2026-07-11T16:48:49.194077+00:00",
+    "by": "Sol (working on Martin's behalf)",
+    "note": "Version 0.1.1 fixes the state filter and legacy migration; focused-block scope, expected-text conflict protection, and the host command-palette context path were reviewed. The low finding is bounded plugin-local availability only."
+  },
+  "pullRequest": {
+    "head": "873acceed2db9dd70446fa42db91cf53fde65642",
+    "number": 1
+  },
+  "submission": {
+    "commit": "92f9acd461a884fa3f3316527e526071bfc5d5e9",
+    "manifestPath": "manifest.json",
+    "pluginId": "page.tine.query-filter",
+    "repository": "https://github.com/martinkoutecky/tine-plugin-query-filter",
+    "schemaVersion": 1,
+    "version": "0.1.1"
+  }
+}
