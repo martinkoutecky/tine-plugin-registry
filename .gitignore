@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 .index.sig.raw
 .auditor-work/
+auditor/config.local.toml
+auditor/publisher-config.local.toml
+auditor/crontab.local

@@ -11,16 +11,23 @@ import subprocess
 import tempfile
 import time
 import tomllib
+import urllib.parse
+import urllib.request
 
 
-def gh(config: dict, args: list[str]) -> str:
-    env = {
-        "PATH": os.environ.get("PATH", ""),
-        "HOME": os.environ.get("HOME", str(pathlib.Path.home())),
-        "GH_CONFIG_DIR": config["gh_config_dir"],
-        "GH_PROMPT_DISABLED": "1",
-    }
-    return subprocess.run(["gh", *args], check=True, capture_output=True, text=True, env=env).stdout
+def github_json(config: dict, route: str) -> object:
+    url = f"https://api.github.com/repos/{config['registry']}/{route}"
+    request = urllib.request.Request(
+        url,
+        headers={"Accept": "application/vnd.github+json", "User-Agent": "tine-plugin-auditor/0.1"},
+    )
+    with urllib.request.urlopen(request, timeout=30) as response:
+        if int(response.headers.get("Content-Length", "0")) > 2 * 1024 * 1024:
+            raise RuntimeError("GitHub response is too large")
+        data = response.read(2 * 1024 * 1024 + 1)
+        if len(data) > 2 * 1024 * 1024:
+            raise RuntimeError("GitHub response is too large")
+        return json.loads(data)
 
 
 def load_state(path: pathlib.Path) -> dict:
@@ -44,19 +51,22 @@ def audit_open_prs(config: dict) -> int:
     work_root.mkdir(parents=True, exist_ok=True)
     spool.mkdir(parents=True, exist_ok=True)
     state = load_state(state_path)
-    prs = json.loads(gh(config, ["pr", "list", "--repo", config["registry"], "--state", "open", "--limit", "100", "--json", "number,headRefOid,files"]))
+    prs = github_json(config, "pulls?state=open&per_page=100")
     completed_now = 0
     for pr in prs:
-        lease = f"{pr['number']}@{pr['headRefOid']}"
+        head = pr["head"]["sha"]
+        lease = f"{pr['number']}@{head}"
         if lease in state["completed"]:
             continue
-        paths = [item["path"] for item in pr.get("files", [])]
+        files = github_json(config, f"pulls/{pr['number']}/files?per_page=100")
+        paths = [item["filename"] for item in files]
         submissions = [path for path in paths if path.startswith("submissions/") and path.endswith(".json")]
         if len(submissions) != 1 or any(not path.startswith("submissions/") for path in paths):
             state["completed"][lease] = {"status": "ignored", "reason": "PR must change exactly one submission file"}
             save_state(state_path, state)
             continue
-        encoded = json.loads(gh(config, ["api", f"repos/{config['registry']}/contents/{submissions[0]}?ref={pr['headRefOid']}"]))["content"]
+        quoted = urllib.parse.quote(submissions[0], safe="/")
+        encoded = github_json(config, f"contents/{quoted}?ref={head}")["content"]
         with tempfile.TemporaryDirectory(prefix="tine-plugin-submission-") as temp:
             submission = pathlib.Path(temp) / "submission.json"
             submission.write_bytes(base64.b64decode(encoded))
@@ -69,15 +79,15 @@ def audit_open_prs(config: dict) -> int:
             try:
                 subprocess.run(command, check=True, timeout=1800)
                 envelope = json.loads(result.read_text())
-                envelope["pullRequest"] = {"number": pr["number"], "head": pr["headRefOid"]}
+                envelope["pullRequest"] = {"number": pr["number"], "head": head}
             except Exception as exc:
                 envelope = {
                     "format": "tine-plugin-audit-result/v1",
-                    "pullRequest": {"number": pr["number"], "head": pr["headRefOid"]},
+                    "pullRequest": {"number": pr["number"], "head": head},
                     "disposition": "quarantine",
                     "failure": f"auditor failed closed: {type(exc).__name__}: {exc}",
                 }
-            outgoing = spool / f"pr-{pr['number']}-{pr['headRefOid']}.json"
+            outgoing = spool / f"pr-{pr['number']}-{head}.json"
             outgoing.write_text(json.dumps(envelope, indent=2, sort_keys=True) + "\n")
         state["completed"][lease] = {"status": envelope["disposition"], "outgoing": outgoing.name}
         save_state(state_path, state)

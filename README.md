@@ -21,5 +21,6 @@ filesystem, process, DOM, browser, Tauri, or graph-path access.
    graph-write authority quarantines for explicit review.
 
 Every public version links its deterministic and AI reports. Passing is evidence, not
-a guarantee. See [POLICY.md](POLICY.md), [SECURITY.md](SECURITY.md), and
+a guarantee. The signed index pins separate SHA-256 digests for each manifest and
+WASM artifact, and Tine checks both before installation. See [POLICY.md](POLICY.md), [SECURITY.md](SECURITY.md), and
 [`auditor/README.md`](auditor/README.md).

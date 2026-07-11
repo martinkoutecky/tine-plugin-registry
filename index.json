@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-11T06:33:54.848255+00:00",
+  "generatedAt": "2026-07-11T06:43:49+00:00",
   "plugins": [
     {
       "aiDevelopment": "primary",
@@ -18,6 +18,7 @@
           "capabilities": [
             "block-decorations.register"
           ],
+          "manifestSha256": "33d7f136741994465f5b7a58e9be679caa9e9f623f4083e2404cd81a332f6cea",
           "manifestUrl": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/packages/page.tine.bullet-threading/0.1.0/manifest.json",
           "platforms": [
             "desktop",
@@ -49,6 +50,7 @@
             "commands.register",
             "graph.write.block"
           ],
+          "manifestSha256": "4dfbee7758f463ba32b2d82b0859f2019344f2a0886c9447e17abea3aa0c4b40",
           "manifestUrl": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/packages/page.tine.query-filter/0.1.0/manifest.json",
           "platforms": [
             "desktop",

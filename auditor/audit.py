@@ -2,6 +2,7 @@
 from __future__ import annotations
 import argparse
 import base64
+import hashlib
 import json
 import os
 import pathlib
@@ -10,6 +11,11 @@ import subprocess
 import tempfile
 import tomllib
 from codex_review import review
+from validation import validate_manifest_identity, validate_source_tree, validate_submission
+
+
+def canonical(value: object) -> bytes:
+    return (json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode()
 
 
 def run(command: list[str], **kwargs) -> subprocess.CompletedProcess:
@@ -47,7 +53,7 @@ def podman_base(
 
 def locked_sdk_source(plugin_root: pathlib.Path, temp: pathlib.Path) -> list[tuple[str, pathlib.Path]]:
     lock_path = plugin_root / "Cargo.lock"
-    if not lock_path.is_file():
+    if lock_path.is_symlink() or not lock_path.is_file():
         return []
     lock = tomllib.loads(lock_path.read_text())
     package = next((item for item in lock.get("package", []) if item.get("name") == "tine-plugin-sdk"), None)
@@ -67,31 +73,39 @@ def locked_sdk_source(plugin_root: pathlib.Path, temp: pathlib.Path) -> list[tup
 
 
 def audit(submission_path: pathlib.Path, tine: pathlib.Path, image: str, max_source: int) -> dict:
-    submission = json.loads(submission_path.read_text())
+    submission = validate_submission(json.loads(submission_path.read_text()))
     with tempfile.TemporaryDirectory(prefix="tine-plugin-audit-") as temp:
         temp_path = pathlib.Path(temp)
         source, cache, output = temp_path / "source", temp_path / "cache", temp_path / "output"
         cache.mkdir(); output.mkdir()
-        safe_git(["clone", "--filter=blob:none", "--no-checkout", submission["repository"], str(source)])
-        safe_git(["-C", str(source), "fetch", "--depth=1", "origin", submission["commit"]])
-        safe_git(["-C", str(source), "checkout", "--detach", submission["commit"]])
+        safe_git(["clone", "--filter=blob:none", "--no-checkout", submission["repository"], str(source)], timeout=300)
+        safe_git(["-C", str(source), "fetch", "--depth=1", "origin", submission["commit"]], timeout=300)
+        safe_git(["-C", str(source), "checkout", "--detach", submission["commit"]], timeout=300)
         actual = safe_git(["-C", str(source), "rev-parse", "HEAD"], capture_output=True).stdout.strip()
         if actual != submission["commit"]:
             raise RuntimeError("checkout did not resolve to the submitted commit")
+        validate_source_tree(source)
         manifest_path = (source / submission["manifestPath"]).resolve()
         if source.resolve() not in manifest_path.parents:
             raise RuntimeError("manifest path escaped checkout")
+        if not manifest_path.is_file():
+            raise RuntimeError("manifest path is not a regular file")
         plugin_root = manifest_path.parent
+        manifest = validate_manifest_identity(json.loads(manifest_path.read_text()), submission)
+        entry_rel = manifest.get("entry")
+        if not isinstance(entry_rel, str):
+            raise RuntimeError("plugin manifest entry is invalid")
+        entry = (plugin_root / entry_rel).resolve()
+        if plugin_root.resolve() not in entry.parents:
+            raise RuntimeError("plugin entry escaped its source root")
         fetch = podman_base(image, source, plugin_root, cache, output, "slirp4netns")
         run([*fetch, "fetch"], timeout=600)
         build = podman_base(image, source, plugin_root, cache, output, "none")
         run([*build, "build"], timeout=600)
-        manifest = json.loads(manifest_path.read_text())
         expected = pathlib.Path(manifest["entry"]).name
         artifact = output / "artifacts" / expected
         if not artifact.is_file():
             raise RuntimeError(f"build did not produce declared entry {expected}")
-        entry = plugin_root / manifest["entry"]
         entry.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(artifact, entry)
         checker_path = temp_path / "check.json"
@@ -137,6 +151,7 @@ def audit(submission_path: pathlib.Path, tine: pathlib.Path, image: str, max_sou
             "disposition": disposition,
             "package": {
                 "manifest": manifest,
+                "manifestSha256": hashlib.sha256(canonical(manifest)).hexdigest(),
                 "wasmBase64": base64.b64encode(artifact.read_bytes()).decode("ascii"),
                 "sha256": checker["wasm"]["sha256"],
             },

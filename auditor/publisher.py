@@ -5,11 +5,13 @@ from __future__ import annotations
 import argparse
 import base64
 import datetime
+import hashlib
 import json
 import os
 import pathlib
 import subprocess
 import tomllib
+from validation import validate_manifest_identity, validate_submission
 
 
 def canonical(value: object) -> bytes:
@@ -43,15 +45,23 @@ def publish(
         disposition = "publish"
     if disposition != "publish":
         return disposition, "Automated audit quarantined this version. See the attached structured report.", pr
-    submission, package = envelope["submission"], envelope["package"]
+    submission = validate_submission(envelope["submission"])
+    package = envelope["package"]
     pid, version = submission["pluginId"], submission["version"]
-    manifest = package["manifest"]
+    manifest = validate_manifest_identity(package["manifest"], submission)
+    manifest_bytes = canonical(manifest)
+    manifest_sha256 = hashlib.sha256(manifest_bytes).hexdigest()
+    if package.get("manifestSha256") != manifest_sha256:
+        raise RuntimeError("audited manifest digest does not match package bytes")
     package_dir = repo / "packages" / pid / version
     audit_dir = repo / "audits" / pid
     package_dir.mkdir(parents=True, exist_ok=True); audit_dir.mkdir(parents=True, exist_ok=True)
     wasm = base64.b64decode(package["wasmBase64"], validate=True)
+    wasm_sha256 = hashlib.sha256(wasm).hexdigest()
+    if package.get("sha256") != wasm_sha256:
+        raise RuntimeError("audited WASM digest does not match package bytes")
     files = {
-        package_dir / "manifest.json": canonical(manifest),
+        package_dir / "manifest.json": manifest_bytes,
         package_dir / "plugin.wasm": wasm,
         audit_dir / f"{version}.json": canonical({key: value for key, value in envelope.items() if key != "package"}),
     }
@@ -72,7 +82,8 @@ def publish(
         plugin["versions"].append({
             "version": version, "apiVersion": manifest["apiVersion"],
             "platforms": manifest.get("platforms", ["desktop"]), "capabilities": manifest["capabilities"],
-            "sha256": package["sha256"],
+            "sha256": wasm_sha256,
+            "manifestSha256": manifest_sha256,
             "manifestUrl": f"{base}/packages/{pid}/{version}/manifest.json",
             "wasmUrl": f"{base}/packages/{pid}/{version}/plugin.wasm",
             "audit": {"status": "passed", "url": f"{base}/audits/{pid}/{version}.json"},

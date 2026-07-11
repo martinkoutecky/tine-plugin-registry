@@ -1,0 +1,26 @@
+name: registry integrity
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - "index.json"
+      - "index.json.sig"
+      - "registry-ed25519.pub.pem"
+      - "packages/**"
+      - "audits/**"
+      - "scripts/validate-index.py"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+      - name: Verify signed index and immutable artifacts
+        run: python3 scripts/validate-index.py
