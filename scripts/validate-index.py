@@ -55,8 +55,23 @@ def main() -> None:
             if version["manifestUrl"] != f"{expected}/manifest.json" or version["wasmUrl"] != f"{expected}/plugin.wasm":
                 raise SystemExit(f"artifact URL mismatch: {identity}")
             audit = ROOT / "audits" / plugin_id / f"{version['version']}.json"
-            if version.get("audit", {}).get("status") != "passed" or not audit.is_file():
+            audit_meta = version.get("audit", {})
+            if audit_meta.get("status") != "passed" or not audit.is_file():
                 raise SystemExit(f"passing audit is missing: {identity}")
+            audit_bytes = audit.read_bytes()
+            audit_value = json.loads(audit_bytes)
+            if audit_bytes != canonical(audit_value):
+                raise SystemExit(f"audit is not canonical: {identity}")
+            if hashlib.sha256(audit_bytes).hexdigest() != audit_meta.get("sha256"):
+                raise SystemExit(f"audit digest mismatch: {identity}")
+            checker = audit_value.get("checker", {})
+            if (
+                checker.get("risk") != audit_meta.get("risk")
+                or checker.get("checkedAt") != audit_meta.get("checkedAt")
+                or audit_value.get("disposition") != audit_meta.get("automatedDisposition")
+                or ("manualApproval" in audit_value) != audit_meta.get("manualApproval")
+            ):
+                raise SystemExit(f"signed audit summary mismatch: {identity}")
 
     signature = base64.b64decode((ROOT / "index.json.sig").read_text().strip(), validate=True)
     with tempfile.NamedTemporaryFile() as sig:

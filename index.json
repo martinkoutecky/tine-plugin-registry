@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-11T06:43:49+00:00",
+  "generatedAt": "2026-07-11T07:32:47+00:00",
   "plugins": [
     {
       "aiDevelopment": "primary",
@@ -12,6 +12,11 @@
         {
           "apiVersion": "0.1",
           "audit": {
+            "automatedDisposition": "publish",
+            "checkedAt": "2026-07-11T06:28:43.462Z",
+            "manualApproval": false,
+            "risk": "low",
+            "sha256": "86ed64a76cd67881c85fe7955758b5c23667f353aed970ebb126c35892b203be",
             "status": "passed",
             "url": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/audits/page.tine.bullet-threading/0.1.0.json"
           },
@@ -43,6 +48,11 @@
         {
           "apiVersion": "0.1",
           "audit": {
+            "automatedDisposition": "quarantine",
+            "checkedAt": "2026-07-11T06:32:06.943Z",
+            "manualApproval": true,
+            "risk": "review",
+            "sha256": "11286ef02352c5a3690ac8c4452c46b989d53d8dda81a9a7411c391ff4fb4e6e",
             "status": "passed",
             "url": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/audits/page.tine.query-filter/0.1.0.json"
           },

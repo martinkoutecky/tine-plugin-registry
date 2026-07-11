@@ -43,11 +43,16 @@
                 "audit": {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": ["status", "url"],
-                  "properties": {
-                    "status": { "const": "passed" },
-                    "url": { "type": "string", "pattern": "^https://" }
-                  }
+                    "required": ["status", "url", "sha256", "risk", "automatedDisposition", "manualApproval", "checkedAt"],
+                    "properties": {
+                      "status": { "const": "passed" },
+                      "url": { "type": "string", "pattern": "^https://" },
+                      "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+                      "risk": { "enum": ["low", "review", "elevated"] },
+                      "automatedDisposition": { "enum": ["publish", "quarantine", "reject"] },
+                      "manualApproval": { "type": "boolean" },
+                      "checkedAt": { "type": "string", "format": "date-time" }
+                    }
                 },
                 "publishedAt": { "type": "string", "format": "date-time" }
               }

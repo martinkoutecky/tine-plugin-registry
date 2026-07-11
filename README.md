@@ -22,5 +22,7 @@ filesystem, process, DOM, browser, Tauri, or graph-path access.
 
 Every public version links its deterministic and AI reports. Passing is evidence, not
 a guarantee. The signed index pins separate SHA-256 digests for each manifest and
-WASM artifact, and Tine checks both before installation. See [POLICY.md](POLICY.md), [SECURITY.md](SECURITY.md), and
+WASM artifact as well as the complete public safety report. It also records whether
+publication was automatic or a named manual approval. Tine checks these bytes before
+displaying the report. See [POLICY.md](POLICY.md), [SECURITY.md](SECURITY.md), and
 [`auditor/README.md`](auditor/README.md).

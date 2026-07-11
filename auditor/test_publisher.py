@@ -36,7 +36,7 @@ def envelope(plugin_id="page.tine.example"):
             "commit": "a" * 40,
             "manifestPath": "manifest.json",
         },
-        "checker": {"status": "passed", "risk": "low"},
+        "checker": {"status": "passed", "risk": "low", "checkedAt": "2026-07-11T00:00:00Z"},
         "aiReview": {"disposition": "pass", "uncertain": False},
         "package": {
             "manifest": manifest,
@@ -74,6 +74,9 @@ class PublisherSecurityTests(unittest.TestCase):
         version = index["plugins"][0]["versions"][0]
         self.assertRegex(version["sha256"], r"^[0-9a-f]{64}$")
         self.assertRegex(version["manifestSha256"], r"^[0-9a-f]{64}$")
+        self.assertRegex(version["audit"]["sha256"], r"^[0-9a-f]{64}$")
+        self.assertEqual(version["audit"]["risk"], "low")
+        self.assertFalse(version["audit"]["manualApproval"])
 
     def test_publisher_rejects_traversal_and_tampered_bytes_before_writing(self):
         bad_path = envelope("../../outside")

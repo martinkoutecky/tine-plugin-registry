@@ -133,10 +133,13 @@ def publish(
     wasm_sha256 = hashlib.sha256(wasm).hexdigest()
     if package.get("sha256") != wasm_sha256:
         raise RuntimeError("audited WASM digest does not match package bytes")
+    public_audit = {key: value for key, value in envelope.items() if key != "package"}
+    audit_bytes = canonical(public_audit)
+    audit_sha256 = hashlib.sha256(audit_bytes).hexdigest()
     files = {
         package_dir / "manifest.json": manifest_bytes,
         package_dir / "plugin.wasm": wasm,
-        audit_dir / f"{version}.json": canonical({key: value for key, value in envelope.items() if key != "package"}),
+        audit_dir / f"{version}.json": audit_bytes,
     }
     for path, data in files.items():
         if path.exists() and path.read_bytes() != data:
@@ -159,7 +162,15 @@ def publish(
             "manifestSha256": manifest_sha256,
             "manifestUrl": f"{base}/packages/{pid}/{version}/manifest.json",
             "wasmUrl": f"{base}/packages/{pid}/{version}/plugin.wasm",
-            "audit": {"status": "passed", "url": f"{base}/audits/{pid}/{version}.json"},
+            "audit": {
+                "status": "passed",
+                "url": f"{base}/audits/{pid}/{version}.json",
+                "sha256": audit_sha256,
+                "risk": envelope["checker"]["risk"],
+                "automatedDisposition": envelope["disposition"],
+                "manualApproval": "manualApproval" in envelope,
+                "checkedAt": envelope["checker"]["checkedAt"],
+            },
             "publishedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         })
     index["plugins"] = sorted(plugins.values(), key=lambda item: item["id"])
