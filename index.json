@@ -1,6 +1,37 @@
 {
-  "schemaVersion": 1,
-  "generatedAt": "2026-07-11T00:00:00Z",
-  "plugins": [],
-  "revocations": []
+  "generatedAt": "2026-07-11T06:33:23.720669+00:00",
+  "plugins": [
+    {
+      "aiDevelopment": "primary",
+      "description": "Draw subtle elbow connectors from parent bullets to their children.",
+      "id": "page.tine.bullet-threading",
+      "license": "MIT",
+      "name": "Bullet threading",
+      "source": "https://github.com/martinkoutecky/tine-plugin-bullet-threading",
+      "versions": [
+        {
+          "apiVersion": "0.1",
+          "audit": {
+            "status": "passed",
+            "url": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/audits/page.tine.bullet-threading/0.1.0.json"
+          },
+          "capabilities": [
+            "block-decorations.register"
+          ],
+          "manifestUrl": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/packages/page.tine.bullet-threading/0.1.0/manifest.json",
+          "platforms": [
+            "desktop",
+            "android",
+            "ios"
+          ],
+          "publishedAt": "2026-07-11T06:33:23.720650+00:00",
+          "sha256": "781889abcb030f058da5fadf25eb157af7e8e16fe1826df817f762517fa2b694",
+          "version": "0.1.0",
+          "wasmUrl": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/packages/page.tine.bullet-threading/0.1.0/plugin.wasm"
+        }
+      ]
+    }
+  ],
+  "revocations": [],
+  "schemaVersion": 1
 }
