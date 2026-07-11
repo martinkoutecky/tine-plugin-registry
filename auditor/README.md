@@ -53,6 +53,11 @@ overwritten. Fill in `publisher-config.local.toml`, then schedule
 `publisher_daemon.py --once` under a separate lock. It creates short-lived
 installation tokens on demand; there is no PAT to retain or rotate.
 
+For a remote machine, choose a fixed loopback port and forward that same port
+over SSH, for example `--port 39401` with an SSH local forward from local
+`39401` to remote `127.0.0.1:39401`. The callback remains loopback-only on both
+ends of the tunnel.
+
 On GitHub, create the App with no webhook, no user authorization, and no account
 permissions. Grant repository `Contents: read/write` and `Pull requests:
 read/write`, and install it only on `martinkoutecky/tine-plugin-registry`. The

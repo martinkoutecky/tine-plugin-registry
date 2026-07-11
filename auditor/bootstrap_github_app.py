@@ -210,10 +210,13 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--key", type=pathlib.Path, default=KEY_PATH)
     parser.add_argument("--metadata", type=pathlib.Path, default=METADATA_PATH)
+    parser.add_argument("--port", type=int, default=0, help="loopback port (default: choose an available port)")
     args = parser.parse_args()
+    if args.port != 0 and not 1024 <= args.port <= 65535:
+        raise SystemExit("port must be 0 or between 1024 and 65535")
     if args.key.exists() or args.metadata.exists():
         raise SystemExit("refusing to overwrite an existing GitHub App bootstrap file")
-    server = BootstrapServer(("127.0.0.1", 0), BootstrapHandler)
+    server = BootstrapServer(("127.0.0.1", args.port), BootstrapHandler)
     server.state = secrets.token_urlsafe(32)
     server.callback_path = f"/callback/{secrets.token_urlsafe(32)}"
     server.key_path = args.key
