@@ -1,0 +1,9 @@
+FROM docker.io/library/rust:1.96.0-bookworm
+
+RUN rustup target add wasm32-unknown-unknown
+
+COPY build.sh /usr/local/bin/tine-plugin-build
+RUN chmod 0555 /usr/local/bin/tine-plugin-build
+
+WORKDIR /src
+ENTRYPOINT ["/bin/bash", "/usr/local/bin/tine-plugin-build"]

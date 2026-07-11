@@ -1,0 +1,11 @@
+registry = "martinkoutecky/tine-plugin-registry"
+tine_checkout = "/aux/koutecky/logseq/tine-plugins"
+builder_image = "localhost/tine-plugin-builder:0.1"
+work_root = "/tmp/tine-plugin-auditor"
+spool_out = "/home/koutecky/.local/state/tine-plugin-auditor/outgoing"
+poll_seconds = 300
+max_source_bytes = 524288
+
+# Point GH_CONFIG_DIR at a read-only GitHub identity. The publisher service uses a
+# different directory and is never inherited by build or Codex review processes.
+gh_config_dir = "/home/koutecky/.config/gh-tine-plugin-intake"

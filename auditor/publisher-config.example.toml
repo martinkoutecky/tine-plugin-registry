@@ -1,0 +1,4 @@
+registry = "martinkoutecky/tine-plugin-registry"
+registry_checkout = "/aux/koutecky/logseq/tine-plugin-registry"
+signing_key = "/home/koutecky/.config/tine-plugin-auditor/registry-ed25519.pem"
+publisher_gh_config_dir = "/home/koutecky/.config/gh-tine-plugin-publisher"

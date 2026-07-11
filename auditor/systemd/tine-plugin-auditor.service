@@ -1,0 +1,14 @@
+[Unit]
+Description=Tine community plugin auditor
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /aux/koutecky/logseq/tine-plugin-registry/auditor/daemon.py --once --config %h/.config/tine-plugin-auditor/config.toml
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/tmp/tine-plugin-auditor %h/.local/state/tine-plugin-auditor
+
+[Install]
+WantedBy=default.target

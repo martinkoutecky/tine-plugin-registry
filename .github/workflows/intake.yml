@@ -1,0 +1,25 @@
+name: submission intake
+
+on:
+  pull_request:
+    paths:
+      - "submissions/**"
+      - "schemas/submission.schema.json"
+      - "scripts/validate-submissions.py"
+
+permissions:
+  contents: read
+
+jobs:
+  metadata-only:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate inert submission metadata
+        run: python3 scripts/validate-submissions.py
+      - name: Confirm workflow never executes submitted repositories
+        run: |
+          echo "This job validates JSON committed to this registry only."
+          echo "Plugin checkout, build, and AI review happen on the isolated local auditor."

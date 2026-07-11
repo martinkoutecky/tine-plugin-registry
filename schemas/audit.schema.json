@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Tine plugin AI audit v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "disposition", "uncertain", "summary", "findings", "areasReviewed"],
+  "properties": {
+    "schemaVersion": { "type": "integer", "const": 1 },
+    "disposition": { "type": "string", "enum": ["pass", "quarantine", "reject"] },
+    "uncertain": { "type": "boolean" },
+    "summary": { "type": "string", "maxLength": 2000 },
+    "findings": {
+      "type": "array", "maxItems": 50,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["severity", "title", "evidence", "impact"],
+        "properties": {
+          "severity": { "type": "string", "enum": ["info", "low", "medium", "high", "critical"] },
+          "title": { "type": "string", "maxLength": 200 },
+          "evidence": { "type": "string", "maxLength": 4000 },
+          "impact": { "type": "string", "maxLength": 2000 }
+        }
+      }
+    },
+    "areasReviewed": { "type": "array", "items": { "type": "string", "maxLength": 300 }, "maxItems": 100 }
+  }
+}
