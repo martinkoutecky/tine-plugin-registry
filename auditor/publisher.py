@@ -20,10 +20,27 @@ def run(command: list[str], **kwargs) -> subprocess.CompletedProcess:
     return subprocess.run(command, check=True, text=True, **kwargs)
 
 
-def publish(envelope_path: pathlib.Path, repo: pathlib.Path, key: pathlib.Path) -> tuple[str, str, int]:
+def publish(
+    envelope_path: pathlib.Path,
+    repo: pathlib.Path,
+    key: pathlib.Path,
+    approve_quarantine: bool = False,
+    approval_note: str = "",
+) -> tuple[str, str, int | None]:
     envelope = json.loads(envelope_path.read_text())
-    pr = envelope["pullRequest"]["number"]
+    pr = envelope.get("pullRequest", {}).get("number")
     disposition = envelope.get("disposition", "quarantine")
+    if approve_quarantine and disposition == "quarantine":
+        checker = envelope.get("checker", {})
+        ai = envelope.get("aiReview", {})
+        if checker.get("status") != "passed" or ai.get("disposition") != "pass" or ai.get("uncertain"):
+            raise RuntimeError("manual approval requires deterministic pass and certain AI pass")
+        envelope["manualApproval"] = {
+            "by": "Sol (working on Martin's behalf)",
+            "note": approval_note,
+            "approvedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        }
+        disposition = "publish"
     if disposition != "publish":
         return disposition, "Automated audit quarantined this version. See the attached structured report.", pr
     submission, package = envelope["submission"], envelope["package"]
@@ -76,17 +93,26 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("envelope", type=pathlib.Path)
     parser.add_argument("--config", type=pathlib.Path, required=True)
+    parser.add_argument("--approve-quarantine", action="store_true")
+    parser.add_argument("--approval-note", default="")
     args = parser.parse_args()
     config = tomllib.loads(args.config.read_text())
     repo, key = pathlib.Path(config["registry_checkout"]), pathlib.Path(config["signing_key"])
-    disposition, comment, pr = publish(args.envelope, repo, key)
+    disposition, comment, pr = publish(
+        args.envelope,
+        repo,
+        key,
+        approve_quarantine=args.approve_quarantine,
+        approval_note=args.approval_note,
+    )
     env = {"PATH": os.environ.get("PATH", ""), "HOME": os.environ.get("HOME", ""), "GH_CONFIG_DIR": config["publisher_gh_config_dir"], "GH_PROMPT_DISABLED": "1"}
     if disposition == "published":
         run(["git", "-C", str(repo), "add", "index.json", "index.json.sig", "packages", "audits"])
         if subprocess.run(["git", "-C", str(repo), "diff", "--cached", "--quiet"]).returncode != 0:
             run(["git", "-C", str(repo), "commit", "-m", "registry: publish audited submission"])
             run(["git", "-C", str(repo), "push", "origin", "main"], env=env)
-    run(["gh", "pr", "comment", str(pr), "--repo", config["registry"], "--body", comment], env=env)
+    if pr is not None:
+        run(["gh", "pr", "comment", str(pr), "--repo", config["registry"], "--body", comment], env=env)
 
 
 if __name__ == "__main__":

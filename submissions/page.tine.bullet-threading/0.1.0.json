@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "pluginId": "page.tine.bullet-threading",
+  "version": "0.1.0",
+  "repository": "https://github.com/martinkoutecky/tine-plugin-bullet-threading",
+  "commit": "141bf407fe2343a2a0e5f7f32b45207c89b73d6c",
+  "manifestPath": "manifest.json"
+}

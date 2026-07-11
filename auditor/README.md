@@ -30,6 +30,6 @@ Install the two user-level service/timer files only after assigning separate
 read-only intake and narrow publisher credentials. Never give a public-PR workflow
 access to this machine or mount the Podman socket into a build.
 
-The checked-in `index.json.sig` is a deliberate development placeholder. Tine must
-not ship catalogue fetching until a dedicated registry Ed25519 public key replaces
-it and a real signature verifies end to end.
+The checked-in `registry-ed25519.pub.pem` is the dedicated registry identity. The
+private key stays mode-600 outside every repository. Tine must verify `index.json.sig`
+before it trusts catalogue metadata or revocations.

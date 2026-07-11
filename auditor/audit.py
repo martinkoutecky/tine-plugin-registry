@@ -8,6 +8,7 @@ import pathlib
 import shutil
 import subprocess
 import tempfile
+import tomllib
 from codex_review import review
 
 
@@ -42,6 +43,27 @@ def podman_base(
         "--workdir", str(workdir),
         image,
     ]
+
+
+def locked_sdk_source(plugin_root: pathlib.Path, temp: pathlib.Path) -> list[tuple[str, pathlib.Path]]:
+    lock_path = plugin_root / "Cargo.lock"
+    if not lock_path.is_file():
+        return []
+    lock = tomllib.loads(lock_path.read_text())
+    package = next((item for item in lock.get("package", []) if item.get("name") == "tine-plugin-sdk"), None)
+    source = package.get("source", "") if package else ""
+    prefix = "git+https://github.com/martinkoutecky/tine?"
+    if not source.startswith(prefix) or "#" not in source:
+        return []
+    commit = source.rsplit("#", 1)[1]
+    if len(commit) != 40 or any(char not in "0123456789abcdef" for char in commit):
+        return []
+    checkout = temp / "sdk-source"
+    safe_git(["clone", "--filter=blob:none", "--no-checkout", "https://github.com/martinkoutecky/tine", str(checkout)])
+    safe_git(["-C", str(checkout), "fetch", "--depth=1", "origin", commit])
+    safe_git(["-C", str(checkout), "checkout", "--detach", commit])
+    sdk = checkout / "plugin-sdk" / "rust"
+    return [(f"locked-tine-plugin-sdk@{commit}", sdk)] if sdk.is_dir() else []
 
 
 def audit(submission_path: pathlib.Path, tine: pathlib.Path, image: str, max_source: int) -> dict:
@@ -81,7 +103,21 @@ def audit(submission_path: pathlib.Path, tine: pathlib.Path, image: str, max_sou
             raise RuntimeError(f"plugin checker produced no report: {completed.stderr[:500]}")
         checker_path.write_text(completed.stdout)
         checker = json.loads(completed.stdout)
-        ai = review(plugin_root, checker, pathlib.Path(__file__).parents[1] / "schemas" / "audit.schema.json", max_source)
+        checker["provenance"] = {
+            "sourceCommit": actual,
+            "artifactBuiltFromThatCheckout": True,
+            "dependencyFetchHadNoCredentials": True,
+            "buildNetwork": "none",
+            "artifactSha256": checker.get("wasm", {}).get("sha256"),
+        }
+        extra_sources = locked_sdk_source(plugin_root, temp_path)
+        ai = review(
+            plugin_root,
+            checker,
+            pathlib.Path(__file__).parents[1] / "schemas" / "audit.schema.json",
+            max_source,
+            extra_sources,
+        )
         deterministic_pass = checker.get("status") == "passed"
         low_risk = checker.get("risk") == "low"
         if not deterministic_pass:
