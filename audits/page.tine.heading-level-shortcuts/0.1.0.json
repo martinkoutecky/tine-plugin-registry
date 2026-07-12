@@ -1,0 +1,120 @@
+{
+  "aiReview": {
+    "areasReviewed": [
+      "malicious intent and deceptive behavior",
+      "manifest/source/artifact consistency",
+      "WASM imports, ABI, and protocol handling",
+      "capability scope and graph transformations",
+      "dependency and build-script risk",
+      "denial of service and memory bounds",
+      "hidden data channels",
+      "license and provenance",
+      "README and behavioral-port claims"
+    ],
+    "disposition": "pass",
+    "findings": [
+      {
+        "evidence": "The manifest requests only commands.register and graph.write.block. The handler accepts command events, validates heading-0 through heading-6, operates solely on focused_block, and returns one ReplaceBlockText effect containing block_id and expected_raw.",
+        "impact": "The host can validate the inert effect and reject stale writes; the plugin cannot enumerate or mutate unrelated graph data through the reviewed interface.",
+        "severity": "info",
+        "title": "Capability use is appropriately constrained"
+      },
+      {
+        "evidence": "Cargo.lock fixes registry checksums, the SDK dependency is pinned to daabe817fd5b2e53ad0384a207714cfbc752d733, its reviewed source is included, and the deterministic report states artifactBuiltFromThatCheckout=true with matching artifact and WASM SHA-256 d7235e883376f8e0ad6a4466f3058d8552ab756d250a66d27afbd15b191a859e, no build network, and no credentials.",
+        "impact": "Manifest/source/artifact substitution and dependency-resolution risk are materially reduced.",
+        "severity": "info",
+        "title": "Build and dependency provenance are adequately pinned"
+      },
+      {
+        "evidence": "The SDK limits input messages to 256 KiB, the linker caps memory at 16 MiB, command levels are restricted to 0–6, and transformations are linear in the focused block text.",
+        "impact": "No practical plugin-controlled denial-of-service path is apparent within the capability-limited runtime.",
+        "severity": "info",
+        "title": "Resource usage is bounded"
+      },
+      {
+        "evidence": "The manifest identifies the original Logseq project, revision 40b5a57577d4ab168dea38614eebe3b42085b665, author, MIT license, and behavioral-port relationship. The included upstream source implements the same heading-level command concept, while the README discloses intentional shortcut and focused-block differences.",
+        "impact": "The port claim is supported and the material behavioral differences are not deceptively concealed.",
+        "severity": "info",
+        "title": "Declared behavioral-port provenance is supported"
+      }
+    ],
+    "schemaVersion": 1,
+    "summary": "The plugin is narrowly scoped and consistent with its manifest: it registers seven heading commands and emits only conflict-checked replacement effects for the focused block. The supplied build report ties the reviewed checkout to the WASM artifact, whose only import is bounded host memory. No malicious behavior, hidden channel, unsafe graph traversal, protocol abuse, risky build script, or material provenance issue was identified.",
+    "uncertain": false
+  },
+  "checker": {
+    "checkedAt": "2026-07-12T22:41:56.649Z",
+    "errors": [],
+    "format": "tine-plugin-check/v1",
+    "plugin": {
+      "id": "page.tine.heading-level-shortcuts",
+      "name": "Heading level shortcuts",
+      "version": "0.1.0"
+    },
+    "portGap": {
+      "blockers": 0,
+      "recommendation": null,
+      "status": "absent"
+    },
+    "provenance": {
+      "artifactBuiltFromThatCheckout": true,
+      "artifactSha256": "d7235e883376f8e0ad6a4466f3058d8552ab756d250a66d27afbd15b191a859e",
+      "buildNetwork": "none",
+      "dependencyFetchHadNoCredentials": true,
+      "sourceCommit": "212368b1d6b78099ee56e1845725665eda9b1237"
+    },
+    "risk": "review",
+    "status": "passed",
+    "warnings": [],
+    "wasm": {
+      "bytes": 161798,
+      "exports": [
+        {
+          "kind": "function",
+          "name": "tine_alloc"
+        },
+        {
+          "kind": "function",
+          "name": "tine_handle"
+        },
+        {
+          "kind": "function",
+          "name": "tine_result_len"
+        },
+        {
+          "kind": "global",
+          "name": "__data_end"
+        },
+        {
+          "kind": "global",
+          "name": "__heap_base"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "memory",
+          "module": "env",
+          "name": "memory"
+        }
+      ],
+      "sha256": "d7235e883376f8e0ad6a4466f3058d8552ab756d250a66d27afbd15b191a859e"
+    }
+  },
+  "commitVerified": "212368b1d6b78099ee56e1845725665eda9b1237",
+  "disposition": "quarantine",
+  "format": "tine-plugin-audit-result/v1",
+  "manualApproval": {
+    "approvedAt": "2026-07-12T22:42:34.132786+00:00",
+    "by": "Sol (working on Martin's behalf)",
+    "note": "Reviewed all Markdown and canonical Org heading transformations after audit-driven fixes. Writes are focused-block-only, expected-text guarded, and covered by regressions."
+  },
+  "submission": {
+    "commit": "212368b1d6b78099ee56e1845725665eda9b1237",
+    "kind": "plugin",
+    "manifestPath": "manifest.json",
+    "packageId": "page.tine.heading-level-shortcuts",
+    "repository": "https://github.com/martinkoutecky/tine-plugin-heading-level-shortcuts",
+    "schemaVersion": 2,
+    "version": "0.1.0"
+  }
+}

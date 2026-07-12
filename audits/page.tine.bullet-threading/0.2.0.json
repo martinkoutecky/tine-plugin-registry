@@ -1,0 +1,104 @@
+{
+  "aiReview": {
+    "areasReviewed": [
+      "malicious intent and deceptive behavior",
+      "manifest/source/artifact consistency",
+      "capability minimization and protocol behavior",
+      "unsafe graph transformations",
+      "dependency and build-script risk",
+      "denial of service and memory bounds",
+      "hidden data channels and host imports",
+      "license and provenance",
+      "README and feature claims",
+      "host-owned declarative decoration rendering"
+    ],
+    "disposition": "pass",
+    "findings": [
+      {
+        "evidence": "Cargo.toml pins tine-plugin-sdk to Git revision daabe817fd5b2e53ad0384a207714cfbc752d733; Cargo.lock pins registry dependencies with checksums. The deterministic report states that the build used no network and fetched dependencies without credentials.",
+        "impact": "The dependency is reproducibly identified, and the supplied locked SDK source exposes no host function imports. No actionable dependency or build-script risk is evident in this artifact.",
+        "severity": "info",
+        "title": "Pinned SDK dependency has a narrow build-time supply-chain surface"
+      },
+      {
+        "evidence": "manifest.json identifies the Logseq source, revision 391c1059e18b2bec01e84019447148318534bc2a, original author, MIT license, and a behavioral-port relationship. Both the plugin MIT license and the declared upstream MIT license are supplied.",
+        "impact": "The visual behavior is attributed and the licensing claim is supported by the included provenance material.",
+        "severity": "info",
+        "title": "Port provenance and licensing are adequately disclosed"
+      }
+    ],
+    "schemaVersion": 1,
+    "summary": "The plugin is a low-risk declarative visual extension. Its source returns no effects, the manifest requests only decoration registration and settings access, and the host implements the declared thread-line contribution using host-owned classes and CSS. The deterministic report ties the reviewed artifact to the supplied checkout and shows only bounded imported memory with the expected ABI exports. No malicious behavior, graph mutation, protocol abuse, hidden channel, build-script execution, or material manifest/source mismatch was identified.",
+    "uncertain": false
+  },
+  "checker": {
+    "checkedAt": "2026-07-12T22:34:31.886Z",
+    "errors": [],
+    "format": "tine-plugin-check/v1",
+    "plugin": {
+      "id": "page.tine.bullet-threading",
+      "name": "Bullet threading",
+      "version": "0.2.0"
+    },
+    "portGap": {
+      "blockers": 0,
+      "recommendation": null,
+      "status": "absent"
+    },
+    "provenance": {
+      "artifactBuiltFromThatCheckout": true,
+      "artifactSha256": "ef39dbfa30c2703b564d0456b043c363c0efd4340a690a1397b1cd229d01beaa",
+      "buildNetwork": "none",
+      "dependencyFetchHadNoCredentials": true,
+      "sourceCommit": "b9389ad8f2bdc6e215767aa2518f750e2629f1da"
+    },
+    "risk": "low",
+    "status": "passed",
+    "warnings": [],
+    "wasm": {
+      "bytes": 147894,
+      "exports": [
+        {
+          "kind": "function",
+          "name": "tine_alloc"
+        },
+        {
+          "kind": "function",
+          "name": "tine_handle"
+        },
+        {
+          "kind": "function",
+          "name": "tine_result_len"
+        },
+        {
+          "kind": "global",
+          "name": "__data_end"
+        },
+        {
+          "kind": "global",
+          "name": "__heap_base"
+        }
+      ],
+      "imports": [
+        {
+          "kind": "memory",
+          "module": "env",
+          "name": "memory"
+        }
+      ],
+      "sha256": "ef39dbfa30c2703b564d0456b043c363c0efd4340a690a1397b1cd229d01beaa"
+    }
+  },
+  "commitVerified": "b9389ad8f2bdc6e215767aa2518f750e2629f1da",
+  "disposition": "publish",
+  "format": "tine-plugin-audit-result/v1",
+  "submission": {
+    "commit": "b9389ad8f2bdc6e215767aa2518f750e2629f1da",
+    "kind": "plugin",
+    "manifestPath": "manifest.json",
+    "packageId": "page.tine.bullet-threading",
+    "repository": "https://github.com/martinkoutecky/tine-plugin-bullet-threading",
+    "schemaVersion": 2,
+    "version": "0.2.0"
+  }
+}

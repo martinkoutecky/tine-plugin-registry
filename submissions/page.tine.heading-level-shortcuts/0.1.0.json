@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 2,
+  "kind": "plugin",
+  "packageId": "page.tine.heading-level-shortcuts",
+  "version": "0.1.0",
+  "repository": "https://github.com/martinkoutecky/tine-plugin-heading-level-shortcuts",
+  "commit": "212368b1d6b78099ee56e1845725665eda9b1237",
+  "manifestPath": "manifest.json"
+}

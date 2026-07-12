@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-12T22:06:25.257323+00:00",
+  "generatedAt": "2026-07-12T22:42:34.134931+00:00",
   "plugins": [
     {
       "aiDevelopment": "primary",
@@ -34,6 +34,70 @@
           "sha256": "781889abcb030f058da5fadf25eb157af7e8e16fe1826df817f762517fa2b694",
           "version": "0.1.0",
           "wasmUrl": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/packages/page.tine.bullet-threading/0.1.0/plugin.wasm"
+        },
+        {
+          "apiVersion": "0.2",
+          "audit": {
+            "automatedDisposition": "publish",
+            "checkedAt": "2026-07-12T22:34:31.886Z",
+            "manualApproval": false,
+            "risk": "low",
+            "sha256": "a9c056189452884c4768a074c4a3a1bdd8d89c0c814ea6ad2e91fd9effac034d",
+            "status": "passed",
+            "url": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/audits/page.tine.bullet-threading/0.2.0.json"
+          },
+          "capabilities": [
+            "block-decorations.register",
+            "settings.read"
+          ],
+          "manifestSha256": "f3d7857537faeeddeb7af74c497b90bd532a2b8df02ead670b42a83c09870619",
+          "manifestUrl": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/packages/page.tine.bullet-threading/0.2.0/manifest.json",
+          "platforms": [
+            "desktop",
+            "android",
+            "ios"
+          ],
+          "publishedAt": "2026-07-12T22:42:34.084036+00:00",
+          "sha256": "ef39dbfa30c2703b564d0456b043c363c0efd4340a690a1397b1cd229d01beaa",
+          "version": "0.2.0",
+          "wasmUrl": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/packages/page.tine.bullet-threading/0.2.0/plugin.wasm"
+        }
+      ]
+    },
+    {
+      "aiDevelopment": "primary",
+      "description": "Set or clear the focused block's heading level with remappable commands and shortcuts.",
+      "id": "page.tine.heading-level-shortcuts",
+      "license": "MIT",
+      "name": "Heading level shortcuts",
+      "source": "https://github.com/martinkoutecky/tine-plugin-heading-level-shortcuts",
+      "versions": [
+        {
+          "apiVersion": "0.2",
+          "audit": {
+            "automatedDisposition": "quarantine",
+            "checkedAt": "2026-07-12T22:41:56.649Z",
+            "manualApproval": true,
+            "risk": "review",
+            "sha256": "adb728bd46628a09898a35a08688188c77c299ae04fb7eef94a5d94124529af0",
+            "status": "passed",
+            "url": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/audits/page.tine.heading-level-shortcuts/0.1.0.json"
+          },
+          "capabilities": [
+            "commands.register",
+            "graph.write.block"
+          ],
+          "manifestSha256": "33b793be84fdc35f9e5995dad966ccb3cf7734e6b92bac8ac3b283abe48529ab",
+          "manifestUrl": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/packages/page.tine.heading-level-shortcuts/0.1.0/manifest.json",
+          "platforms": [
+            "desktop",
+            "android",
+            "ios"
+          ],
+          "publishedAt": "2026-07-12T22:42:34.134923+00:00",
+          "sha256": "d7235e883376f8e0ad6a4466f3058d8552ab756d250a66d27afbd15b191a859e",
+          "version": "0.1.0",
+          "wasmUrl": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/packages/page.tine.heading-level-shortcuts/0.1.0/plugin.wasm"
         }
       ]
     },
@@ -98,6 +162,33 @@
           "sha256": "9412539304763c8b2e0bff76f4c656b8a28c064bdaf942bf0177bfc1a0e5282b",
           "version": "0.1.1",
           "wasmUrl": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/packages/page.tine.query-filter/0.1.1/plugin.wasm"
+        },
+        {
+          "apiVersion": "0.2",
+          "audit": {
+            "automatedDisposition": "quarantine",
+            "checkedAt": "2026-07-12T22:38:08.549Z",
+            "manualApproval": true,
+            "risk": "review",
+            "sha256": "4b3a388d02b241bc9cad530039c0f61d58feb3b19778ab92c24a6fe84f5b6a8d",
+            "status": "passed",
+            "url": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/audits/page.tine.query-filter/0.2.0.json"
+          },
+          "capabilities": [
+            "commands.register",
+            "graph.write.block"
+          ],
+          "manifestSha256": "68bb6f639c623c082ebd587baa8f10c734ef7c3d5d840a3a1799fb2c7f481ee0",
+          "manifestUrl": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/packages/page.tine.query-filter/0.2.0/manifest.json",
+          "platforms": [
+            "desktop",
+            "android",
+            "ios"
+          ],
+          "publishedAt": "2026-07-12T22:42:34.126708+00:00",
+          "sha256": "187423b0bee124ae2386516967c3eb7e349cba614c5dfd7185459255092ce63c",
+          "version": "0.2.0",
+          "wasmUrl": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/packages/page.tine.query-filter/0.2.0/plugin.wasm"
         }
       ]
     }

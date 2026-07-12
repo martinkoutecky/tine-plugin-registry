@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 2,
+  "kind": "plugin",
+  "packageId": "page.tine.query-filter",
+  "version": "0.2.0",
+  "repository": "https://github.com/martinkoutecky/tine-plugin-query-filter",
+  "commit": "733aabdfb905bbe7c75877878e79ea03aa6de53e",
+  "manifestPath": "manifest.json"
+}

@@ -53,7 +53,41 @@ def podman_base(
     ]
 
 
-def locked_sdk_source(plugin_root: pathlib.Path, temp: pathlib.Path) -> list[tuple[str, pathlib.Path]]:
+def bwrap_base(
+    source: pathlib.Path,
+    plugin_root: pathlib.Path,
+    cache: pathlib.Path,
+    output: pathlib.Path,
+    network: bool,
+) -> list[str]:
+    """Minimal credential-free root for hosts where rootless Podman is absent."""
+    workdir = pathlib.PurePosixPath("/src") / plugin_root.relative_to(source).as_posix()
+    command = [
+        "bwrap", "--die-with-parent", "--new-session", "--unshare-user-try", "--cap-drop", "ALL",
+        "--clearenv", "--setenv", "PATH", "/opt/cargo/bin:/usr/local/bin:/usr/bin:/bin",
+        "--setenv", "HOME", "/tmp/home", "--setenv", "RUSTUP_HOME", "/opt/rustup",
+        "--setenv", "LANG", "C.UTF-8",
+        "--ro-bind", "/usr", "/usr", "--ro-bind", "/bin", "/bin",
+        "--ro-bind", "/lib", "/lib", "--ro-bind", "/lib64", "/lib64",
+        "--dir", "/opt", "--ro-bind", "/opt/cargo", "/opt/cargo",
+        "--ro-bind", "/opt/rustup", "/opt/rustup",
+        "--dir", "/etc", "--ro-bind", "/etc/ssl", "/etc/ssl",
+        "--ro-bind", "/etc/alternatives", "/etc/alternatives",
+        "--ro-bind", "/etc/resolv.conf", "/etc/resolv.conf",
+        "--ro-bind", "/etc/hosts", "/etc/hosts",
+        "--ro-bind", "/proc", "/proc", "--dev", "/dev",
+        "--dir", "/home", "--dir", "/home/koutecky", "--tmpfs", "/tmp",
+        "--ro-bind", str(source), "/src", "--bind", str(cache), "/cache",
+        "--bind", str(output), "/out",
+        "--ro-bind", str(pathlib.Path(__file__).with_name("container") / "build.sh"), "/builder.sh",
+        "--chdir", str(workdir),
+    ]
+    if not network:
+        command.append("--unshare-net")
+    return [*command, "/bin/bash", "/builder.sh"]
+
+
+def locked_sdk_source(plugin_root: pathlib.Path, temp: pathlib.Path, manifest: dict) -> list[tuple[str, pathlib.Path]]:
     lock_path = plugin_root / "Cargo.lock"
     if lock_path.is_symlink() or not lock_path.is_file():
         return []
@@ -71,7 +105,19 @@ def locked_sdk_source(plugin_root: pathlib.Path, temp: pathlib.Path) -> list[tup
     safe_git(["-C", str(checkout), "fetch", "--depth=1", "origin", commit])
     safe_git(["-C", str(checkout), "checkout", "--detach", commit])
     sdk = checkout / "plugin-sdk" / "rust"
-    return [(f"locked-tine-plugin-sdk@{commit}", sdk)] if sdk.is_dir() else []
+    sources = [(f"locked-tine-plugin-sdk@{commit}", sdk)] if sdk.is_dir() else []
+    if manifest.get("contributions", {}).get("blockDecorations"):
+        evidence = temp / "host-decoration-evidence"
+        for relative in [
+            "src/plugins/manager.ts", "src/plugins/manifest.ts",
+            "src/components/Block.tsx", "src/styles/app.css",
+        ]:
+            source = checkout / relative
+            destination = evidence / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source, destination)
+        sources.append((f"locked-tine-host-decoration@{commit}", evidence))
+    return sources
 
 
 def pinned_port_source(manifest: dict, temp: pathlib.Path) -> list[tuple[str, pathlib.Path]]:
@@ -103,7 +149,7 @@ def pinned_port_source(manifest: dict, temp: pathlib.Path) -> list[tuple[str, pa
             continue
         name = path.name.lower()
         relevant = (
-            path.suffix.lower() in {".css", ".scss"}
+            path.suffix.lower() in {".css", ".scss", ".js", ".ts", ".tsx"}
             or name in {"license", "copying", "notice", "manifest.json", "package.json"}
             or name.startswith("readme")
         )
@@ -189,9 +235,14 @@ def audit(submission_path: pathlib.Path, tine: pathlib.Path, image: str, max_sou
         entry = (plugin_root / entry_rel).resolve()
         if plugin_root.resolve() not in entry.parents:
             raise RuntimeError("plugin entry escaped its source root")
-        fetch = podman_base(image, source, plugin_root, cache, output, "slirp4netns")
+        use_podman = shutil.which("podman") is not None
+        if not use_podman and shutil.which("bwrap") is None:
+            raise RuntimeError("neither rootless Podman nor Bubblewrap is available")
+        fetch = (podman_base(image, source, plugin_root, cache, output, "slirp4netns")
+                 if use_podman else bwrap_base(source, plugin_root, cache, output, True))
         run([*fetch, "fetch"], timeout=600)
-        build = podman_base(image, source, plugin_root, cache, output, "none")
+        build = (podman_base(image, source, plugin_root, cache, output, "none")
+                 if use_podman else bwrap_base(source, plugin_root, cache, output, False))
         run([*build, "build"], timeout=600)
         expected = pathlib.Path(manifest["entry"]).name
         artifact = output / "artifacts" / expected
@@ -215,7 +266,10 @@ def audit(submission_path: pathlib.Path, tine: pathlib.Path, image: str, max_sou
             "buildNetwork": "none",
             "artifactSha256": checker.get("wasm", {}).get("sha256"),
         }
-        extra_sources = locked_sdk_source(plugin_root, temp_path)
+        extra_sources = [
+            *locked_sdk_source(plugin_root, temp_path, manifest),
+            *pinned_port_source(manifest, temp_path),
+        ]
         ai = review(
             plugin_root,
             checker,
