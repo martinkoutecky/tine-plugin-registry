@@ -5,10 +5,12 @@ polls only this registry, leases immutable submissions, and has three boundaries
 
 1. `daemon.py` uses unauthenticated read-only GitHub HTTP for this public repository
    and clones the submitted public commit. It has no GitHub credential.
-2. Hostile fetch/build runs in fresh rootless Podman containers (container root is
-   still the unprivileged host user) with no host home,
-   sockets, Codex auth, GitHub credentials, signing key, or publisher spool. Build
-   scripts run only in the network-disabled phase.
+2. Hostile fetch/build runs in a fresh rootless Podman container when Podman is
+   available, or in a Bubblewrap namespace with the same fail-closed policy on this
+   host. The sandbox has no host home, sockets, Codex auth, GitHub credentials,
+   signing key, or publisher spool. Dependency fetch gets network but no credentials;
+   submitted build scripts run only in the network-disabled phase. Source is
+   read-only and only dedicated cache and artifact directories are writable.
 3. `codex_review.py` sends a bounded text bundle to ephemeral `codex exec` with user
    config/rules ignored and shell, unified exec, apps, browser, computer-use, and
    plugins disabled. The model has no source checkout or tool path to credentials.
@@ -30,6 +32,10 @@ python3 auditor/daemon.py --once --config ~/.config/tine-plugin-auditor/config.t
 python3 -m unittest discover -s auditor -p 'test_*.py' -v
 python3 scripts/validate-index.py
 ```
+
+Podman is preferred. If it is unavailable, install Bubblewrap and verify that
+unprivileged user namespaces are enabled. The auditor refuses executable submissions
+when neither isolation backend is usable; it never falls back to a host build.
 
 Install the two user-level service/timer files only after assigning a narrow
 publisher credential. Never give a public-PR workflow

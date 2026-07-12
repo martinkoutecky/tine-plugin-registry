@@ -15,7 +15,7 @@ filesystem, process, DOM, browser, Tauri, or graph-path access.
 3. Add one immutable `submissions/<package-id>/<version>.json` file in a pull request.
 4. GitHub performs metadata-only intake. It does not execute pull-request code.
 5. Martin's local auditor checks out the exact commit, builds it in a fresh rootless
-   Podman sandbox with no secrets when executable code must be built, runs the
+   Podman sandbox (or the audited Bubblewrap fallback) with no secrets when executable code must be built, runs the
    package-specific deterministic checker, and asks a no-tools Codex process for a
    structured source and provenance review.
 6. Passing low-risk versions may publish automatically. Anything uncertain or with
