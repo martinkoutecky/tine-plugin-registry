@@ -61,7 +61,7 @@ class PublisherSecurityTests(unittest.TestCase):
         self.repo = self.root / "registry"
         self.repo.mkdir()
         (self.repo / "index.json").write_text(
-            json.dumps({"schemaVersion": 1, "generatedAt": "initial", "plugins": [], "revocations": []}) + "\n"
+            json.dumps({"schemaVersion": 1, "generatedAt": "initial", "plugins": [], "themes": [], "revocations": []}) + "\n"
         )
         self.key = self.root / "key.pem"
         subprocess.run(["openssl", "genpkey", "-algorithm", "ED25519", "-out", str(self.key)], check=True)
@@ -113,6 +113,35 @@ class PublisherSecurityTests(unittest.TestCase):
             private_file(self.key, "test key")
         self.key.chmod(0o600)
         self.assertEqual(private_file(self.key, "test key"), self.key)
+
+    def test_publisher_writes_inert_theme_without_executable_artifact(self):
+        manifest = {
+            "schemaVersion": 1, "id": "org.tine.theme.example", "name": "Example colors",
+            "version": "1.0.0", "apiVersion": "0.1", "description": "Example theme",
+            "author": "Example", "license": "MIT", "source": "https://github.com/example/theme",
+            "modes": {"dark": {"--ls-primary-background-color": "#111111"}},
+            "screenshots": [], "aiDevelopment": "none",
+        }
+        submission = {
+            "schemaVersion": 2, "kind": "theme", "packageId": manifest["id"],
+            "version": manifest["version"], "repository": manifest["source"],
+            "commit": "c" * 40, "manifestPath": "theme.json",
+        }
+        value = {
+            "format": "tine-package-audit-result/v1", "disposition": "publish",
+            "commitVerified": submission["commit"], "submission": submission,
+            "checker": {"status": "passed", "risk": "low", "checkedAt": "2026-07-12T00:00:00Z"},
+            "aiReview": {"disposition": "pass", "uncertain": False, "summary": "Inert colors only.",
+                         "findings": [], "areasReviewed": ["theme manifest and provenance"]},
+            "package": {"manifest": manifest, "manifestSha256": hashlib.sha256(canonical(manifest)).hexdigest()},
+        }
+        result = publish(self.write_envelope(value), self.repo, self.key)
+        self.assertEqual(result[0], "published")
+        index = json.loads((self.repo / "index.json").read_text())
+        version = index["themes"][0]["versions"][0]
+        self.assertEqual(version["modes"], ["dark"])
+        self.assertNotIn("wasmUrl", version)
+        self.assertTrue((self.repo / "themes" / manifest["id"] / "1.0.0" / "theme.json").is_file())
 
     def test_manual_approval_is_persisted_for_idempotent_push_retries(self):
         value = envelope()

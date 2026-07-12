@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-11T16:48:49.229447+00:00",
+  "generatedAt": "2026-07-12T22:06:25.257323+00:00",
   "plugins": [
     {
       "aiDevelopment": "primary",
@@ -103,5 +103,67 @@
     }
   ],
   "revocations": [],
-  "schemaVersion": 1
+  "schemaVersion": 1,
+  "themes": [
+    {
+      "aiDevelopment": "primary",
+      "description": "A color-only Tine port of Logseq Dev Theme's light and dark palettes. Fonts, layout, and bullet-threading CSS are intentionally excluded.",
+      "id": "org.tine.theme.dev",
+      "license": "MIT",
+      "name": "Dev Theme Colors",
+      "source": "https://github.com/martinkoutecky/tine-theme-dev",
+      "versions": [
+        {
+          "apiVersion": "0.1",
+          "audit": {
+            "automatedDisposition": "publish",
+            "checkedAt": "2026-07-12T22:03:42.052Z",
+            "manualApproval": false,
+            "risk": "low",
+            "sha256": "5258147de2293551d62e7ee40ccb598ca7cc37405992e0533ffb07f8dfaa1be1",
+            "status": "passed",
+            "url": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/audits/org.tine.theme.dev/1.0.0.json"
+          },
+          "manifestSha256": "545759725b2ba1f304526f08ba61b80adb4d198df669bf1099edc8268d1b3074",
+          "manifestUrl": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/themes/org.tine.theme.dev/1.0.0/theme.json",
+          "modes": [
+            "dark",
+            "light"
+          ],
+          "publishedAt": "2026-07-12T22:06:25.249316+00:00",
+          "version": "1.0.0"
+        }
+      ]
+    },
+    {
+      "aiDevelopment": "primary",
+      "description": "A color-only Tine port of the Obsidian Things theme. Layout, fonts, icons, checkbox styling, and plugin-specific CSS are intentionally excluded.",
+      "id": "org.tine.theme.things",
+      "license": "MIT",
+      "name": "Things Colors",
+      "source": "https://github.com/martinkoutecky/tine-theme-things",
+      "versions": [
+        {
+          "apiVersion": "0.1",
+          "audit": {
+            "automatedDisposition": "publish",
+            "checkedAt": "2026-07-12T22:04:35.704Z",
+            "manualApproval": false,
+            "risk": "low",
+            "sha256": "dc2cfda217014044ffb0ccd7d579a059025f08fd05b02007908bfe718719f3f2",
+            "status": "passed",
+            "url": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/audits/org.tine.theme.things/1.0.0.json"
+          },
+          "manifestSha256": "b2df2c2cb8809e708ff7b9d8403ca76d34bc6d22f229823578ab08e926177bb1",
+          "manifestUrl": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/themes/org.tine.theme.things/1.0.0/theme.json",
+          "modes": [
+            "dark",
+            "light"
+          ],
+          "publishedAt": "2026-07-12T22:06:25.257307+00:00",
+          "version": "1.0.0"
+        }
+      ]
+    }
+  ]
 }

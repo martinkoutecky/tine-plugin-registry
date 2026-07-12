@@ -22,7 +22,7 @@ def main() -> None:
     index = json.loads(raw)
     if raw != canonical(index):
         raise SystemExit("index.json is not canonical sorted JSON")
-    if index.get("schemaVersion") != 1 or set(index) != {"schemaVersion", "generatedAt", "plugins", "revocations"}:
+    if index.get("schemaVersion") != 1 or set(index) != {"schemaVersion", "generatedAt", "plugins", "themes", "revocations"}:
         raise SystemExit("index.json envelope is invalid")
 
     identities = set()
@@ -72,6 +72,48 @@ def main() -> None:
                 or ("manualApproval" in audit_value) != audit_meta.get("manualApproval")
             ):
                 raise SystemExit(f"signed audit summary mismatch: {identity}")
+
+    for theme in index["themes"]:
+        theme_id = theme["id"]
+        for version in theme["versions"]:
+            identity = (theme_id, version["version"])
+            if identity in identities:
+                raise SystemExit(f"duplicate registry version: {identity}")
+            identities.add(identity)
+            manifest_path = ROOT / "themes" / theme_id / version["version"] / "theme.json"
+            manifest_bytes = manifest_path.read_bytes()
+            manifest = json.loads(manifest_bytes)
+            if manifest_bytes != canonical(manifest):
+                raise SystemExit(f"theme manifest is not canonical: {identity}")
+            if manifest.get("id") != theme_id or manifest.get("version") != version["version"]:
+                raise SystemExit(f"theme identity mismatch: {identity}")
+            if manifest.get("apiVersion") != version["apiVersion"]:
+                raise SystemExit(f"theme API mismatch: {identity}")
+            if sorted(manifest.get("modes", {}).keys()) != version["modes"]:
+                raise SystemExit(f"theme modes mismatch: {identity}")
+            if hashlib.sha256(manifest_bytes).hexdigest() != version["manifestSha256"]:
+                raise SystemExit(f"theme manifest digest mismatch: {identity}")
+            expected = f"{BASE}/themes/{theme_id}/{version['version']}/theme.json"
+            if version["manifestUrl"] != expected:
+                raise SystemExit(f"theme artifact URL mismatch: {identity}")
+            audit = ROOT / "audits" / theme_id / f"{version['version']}.json"
+            audit_meta = version.get("audit", {})
+            if audit_meta.get("status") != "passed" or not audit.is_file():
+                raise SystemExit(f"passing theme audit is missing: {identity}")
+            audit_bytes = audit.read_bytes()
+            audit_value = json.loads(audit_bytes)
+            if audit_bytes != canonical(audit_value):
+                raise SystemExit(f"theme audit is not canonical: {identity}")
+            if hashlib.sha256(audit_bytes).hexdigest() != audit_meta.get("sha256"):
+                raise SystemExit(f"theme audit digest mismatch: {identity}")
+            checker = audit_value.get("checker", {})
+            if (
+                checker.get("risk") != audit_meta.get("risk")
+                or checker.get("checkedAt") != audit_meta.get("checkedAt")
+                or audit_value.get("disposition") != audit_meta.get("automatedDisposition")
+                or ("manualApproval" in audit_value) != audit_meta.get("manualApproval")
+            ):
+                raise SystemExit(f"signed theme audit summary mismatch: {identity}")
 
     signature = base64.b64decode((ROOT / "index.json.sig").read_text().strip(), validate=True)
     with tempfile.NamedTemporaryFile() as sig:

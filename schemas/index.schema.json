@@ -3,7 +3,7 @@
   "title": "Tine signed plugin registry index v1",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "generatedAt", "plugins", "revocations"],
+  "required": ["schemaVersion", "generatedAt", "plugins", "themes", "revocations"],
   "properties": {
     "schemaVersion": { "const": 1 },
     "generatedAt": { "type": "string", "format": "date-time" },
@@ -29,7 +29,7 @@
               "required": ["version", "apiVersion", "platforms", "capabilities", "sha256", "manifestSha256", "manifestUrl", "wasmUrl", "audit", "publishedAt"],
               "properties": {
                 "version": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?$" },
-                "apiVersion": { "const": "0.1" },
+                "apiVersion": { "enum": ["0.1", "0.2"] },
                 "platforms": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["desktop", "android", "ios"] } },
                 "capabilities": {
                   "type": "array",
@@ -61,6 +61,38 @@
         }
       }
     },
+    "themes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "description", "source", "license", "aiDevelopment", "versions"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9](?:[a-z0-9.-]{1,62}[a-z0-9])$" },
+          "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "description": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "source": { "type": "string", "pattern": "^https://" },
+          "license": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "aiDevelopment": { "enum": ["none", "assisted", "primary"] },
+          "versions": {
+            "type": "array", "minItems": 1,
+            "items": {
+              "type": "object", "additionalProperties": false,
+              "required": ["version", "apiVersion", "modes", "manifestSha256", "manifestUrl", "audit", "publishedAt"],
+              "properties": {
+                "version": { "type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?$" },
+                "apiVersion": { "const": "0.1" },
+                "modes": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["light", "dark"] } },
+                "manifestSha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+                "manifestUrl": { "type": "string", "pattern": "^https://" },
+                "audit": { "$ref": "#/$defs/audit" },
+                "publishedAt": { "type": "string", "format": "date-time" }
+              }
+            }
+          }
+        }
+      }
+    },
     "revocations": {
       "type": "array",
       "items": {
@@ -74,6 +106,21 @@
           "reason": { "type": "string" },
           "revokedAt": { "type": "string", "format": "date-time" }
         }
+      }
+    }
+  },
+  "$defs": {
+    "audit": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "url", "sha256", "risk", "automatedDisposition", "manualApproval", "checkedAt"],
+      "properties": {
+        "status": { "const": "passed" },
+        "url": { "type": "string", "pattern": "^https://" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "risk": { "enum": ["low", "review", "elevated"] },
+        "automatedDisposition": { "enum": ["publish", "quarantine", "reject"] },
+        "manualApproval": { "type": "boolean" },
+        "checkedAt": { "type": "string", "format": "date-time" }
       }
     }
   }

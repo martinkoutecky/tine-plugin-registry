@@ -8,18 +8,32 @@ ID = re.compile(r"^[a-z0-9](?:[a-z0-9.-]{1,62}[a-z0-9])$")
 VERSION = re.compile(r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?$")
 REPOSITORY = re.compile(r"^https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:\.git)?$")
 COMMIT = re.compile(r"^[0-9a-f]{40}$")
-SUBMISSION_FIELDS = {"schemaVersion", "pluginId", "version", "repository", "commit", "manifestPath"}
+SUBMISSION_V1_FIELDS = {"schemaVersion", "pluginId", "version", "repository", "commit", "manifestPath"}
+SUBMISSION_V2_FIELDS = {"schemaVersion", "kind", "packageId", "version", "repository", "commit", "manifestPath"}
 AUDIT_RISKS = {"low", "review", "elevated"}
 FINDING_SEVERITIES = {"info", "low", "medium", "high", "critical"}
 
 
 def validate_submission(value: object) -> dict:
-    if not isinstance(value, dict) or set(value) != SUBMISSION_FIELDS:
+    if not isinstance(value, dict):
         raise ValueError("submission fields are invalid")
-    if value.get("schemaVersion") != 1:
-        raise ValueError("submission schemaVersion must be 1")
-    if not isinstance(value.get("pluginId"), str) or not ID.fullmatch(value["pluginId"]):
-        raise ValueError("submission pluginId is invalid")
+    version = value.get("schemaVersion")
+    if version == 1:
+        if set(value) != SUBMISSION_V1_FIELDS:
+            raise ValueError("v1 submission fields are invalid")
+        package_id = value.get("pluginId")
+        kind = "plugin"
+    elif version == 2:
+        if set(value) != SUBMISSION_V2_FIELDS:
+            raise ValueError("v2 submission fields are invalid")
+        package_id = value.get("packageId")
+        kind = value.get("kind")
+        if kind not in {"plugin", "theme"}:
+            raise ValueError("submission kind is invalid")
+    else:
+        raise ValueError("submission schemaVersion is unsupported")
+    if not isinstance(package_id, str) or not ID.fullmatch(package_id):
+        raise ValueError("submission package id is invalid")
     if not isinstance(value.get("version"), str) or not VERSION.fullmatch(value["version"]):
         raise ValueError("submission version is invalid")
     if not isinstance(value.get("repository"), str) or not REPOSITORY.fullmatch(value["repository"]):
@@ -31,23 +45,33 @@ def validate_submission(value: object) -> dict:
         not isinstance(manifest, str)
         or manifest.startswith("/")
         or ".." in pathlib.PurePosixPath(manifest).parts
-        or not manifest.endswith("manifest.json")
+        or not manifest.endswith("manifest.json" if kind == "plugin" else "theme.json")
     ):
         raise ValueError("submission manifestPath is invalid")
     return value
 
 
+def submission_kind(submission: dict) -> str:
+    return "plugin" if submission["schemaVersion"] == 1 else submission["kind"]
+
+
+def submission_id(submission: dict) -> str:
+    return submission["pluginId"] if submission["schemaVersion"] == 1 else submission["packageId"]
+
+
 def validate_manifest_identity(manifest: object, submission: dict) -> dict:
     if not isinstance(manifest, dict):
         raise ValueError("plugin manifest is not an object")
-    if manifest.get("id") != submission["pluginId"] or manifest.get("version") != submission["version"]:
+    if manifest.get("id") != submission_id(submission) or manifest.get("version") != submission["version"]:
         raise ValueError("manifest identity does not match the immutable submission")
     return manifest
 
 
 def validate_publishable_audit(envelope: object, submission: dict) -> dict:
     """Validate every public audit field before it can enter a signed index."""
-    if not isinstance(envelope, dict) or envelope.get("format") != "tine-plugin-audit-result/v1":
+    if not isinstance(envelope, dict) or envelope.get("format") not in {
+        "tine-plugin-audit-result/v1", "tine-package-audit-result/v1"
+    }:
         raise ValueError("audit result format is invalid")
     if envelope.get("disposition") not in {"publish", "quarantine"}:
         raise ValueError("audit disposition is not publishable")

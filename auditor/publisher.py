@@ -12,7 +12,10 @@ import subprocess
 import tempfile
 import tomllib
 from github_app import github_json, installation_token
-from validation import validate_manifest_identity, validate_publishable_audit, validate_submission
+from validation import (
+    submission_id, submission_kind, validate_manifest_identity,
+    validate_publishable_audit, validate_submission,
+)
 
 
 def canonical(value: object) -> bytes:
@@ -121,48 +124,50 @@ def publish(
     submission = validate_submission(envelope["submission"])
     validate_publishable_audit(envelope, submission)
     package = envelope["package"]
-    pid, version = submission["pluginId"], submission["version"]
+    kind, pid, version = submission_kind(submission), submission_id(submission), submission["version"]
     manifest = validate_manifest_identity(package["manifest"], submission)
     manifest_bytes = canonical(manifest)
     manifest_sha256 = hashlib.sha256(manifest_bytes).hexdigest()
     if package.get("manifestSha256") != manifest_sha256:
         raise RuntimeError("audited manifest digest does not match package bytes")
-    package_dir = repo / "packages" / pid / version
+    package_dir = repo / ("packages" if kind == "plugin" else "themes") / pid / version
     audit_dir = repo / "audits" / pid
     package_dir.mkdir(parents=True, exist_ok=True); audit_dir.mkdir(parents=True, exist_ok=True)
-    wasm = base64.b64decode(package["wasmBase64"], validate=True)
-    wasm_sha256 = hashlib.sha256(wasm).hexdigest()
-    if package.get("sha256") != wasm_sha256:
-        raise RuntimeError("audited WASM digest does not match package bytes")
+    wasm = b""
+    wasm_sha256 = ""
+    if kind == "plugin":
+        wasm = base64.b64decode(package["wasmBase64"], validate=True)
+        wasm_sha256 = hashlib.sha256(wasm).hexdigest()
+        if package.get("sha256") != wasm_sha256:
+            raise RuntimeError("audited WASM digest does not match package bytes")
     public_audit = {key: value for key, value in envelope.items() if key != "package"}
     audit_bytes = canonical(public_audit)
     audit_sha256 = hashlib.sha256(audit_bytes).hexdigest()
-    files = {
-        package_dir / "manifest.json": manifest_bytes,
-        package_dir / "plugin.wasm": wasm,
-        audit_dir / f"{version}.json": audit_bytes,
-    }
+    files = {audit_dir / f"{version}.json": audit_bytes}
+    if kind == "plugin":
+        files[package_dir / "manifest.json"] = manifest_bytes
+        files[package_dir / "plugin.wasm"] = wasm
+    else:
+        files[package_dir / "theme.json"] = manifest_bytes
     for path, data in files.items():
         if path.exists() and path.read_bytes() != data:
             raise RuntimeError(f"immutable registry artifact differs: {path}")
         path.write_bytes(data)
     index_path = repo / "index.json"
     index = json.loads(index_path.read_text())
-    plugins = {item["id"]: item for item in index["plugins"]}
-    plugin = plugins.setdefault(pid, {
+    collection_name = "plugins" if kind == "plugin" else "themes"
+    collection = {item["id"]: item for item in index.get(collection_name, [])}
+    item = collection.setdefault(pid, {
         "id": pid, "name": manifest["name"], "description": manifest["description"],
         "source": manifest["source"], "license": manifest["license"],
         "aiDevelopment": manifest.get("aiDevelopment", "none"), "versions": [],
     })
-    if not any(item["version"] == version for item in plugin["versions"]):
+    if not any(candidate["version"] == version for candidate in item["versions"]):
         base = f"https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main"
-        plugin["versions"].append({
+        version_entry = {
             "version": version, "apiVersion": manifest["apiVersion"],
-            "platforms": manifest.get("platforms", ["desktop"]), "capabilities": manifest["capabilities"],
-            "sha256": wasm_sha256,
             "manifestSha256": manifest_sha256,
-            "manifestUrl": f"{base}/packages/{pid}/{version}/manifest.json",
-            "wasmUrl": f"{base}/packages/{pid}/{version}/plugin.wasm",
+            "manifestUrl": f"{base}/{'packages' if kind == 'plugin' else 'themes'}/{pid}/{version}/{'manifest.json' if kind == 'plugin' else 'theme.json'}",
             "audit": {
                 "status": "passed",
                 "url": f"{base}/audits/{pid}/{version}.json",
@@ -173,8 +178,20 @@ def publish(
                 "checkedAt": envelope["checker"]["checkedAt"],
             },
             "publishedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        })
-    index["plugins"] = sorted(plugins.values(), key=lambda item: item["id"])
+        }
+        if kind == "plugin":
+            version_entry.update({
+                "platforms": manifest.get("platforms", ["desktop"]),
+                "capabilities": manifest["capabilities"],
+                "sha256": wasm_sha256,
+                "wasmUrl": f"{base}/packages/{pid}/{version}/plugin.wasm",
+            })
+        else:
+            version_entry["modes"] = sorted(manifest["modes"].keys())
+        item["versions"].append(version_entry)
+    index[collection_name] = sorted(collection.values(), key=lambda candidate: candidate["id"])
+    index.setdefault("plugins", [])
+    index.setdefault("themes", [])
     index["generatedAt"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
     index_bytes = canonical(index)
     index_path.write_bytes(index_bytes)
@@ -182,7 +199,7 @@ def publish(
     run(["openssl", "pkeyutl", "-sign", "-rawin", "-inkey", str(key), "-in", str(index_path), "-out", str(raw_signature)])
     (repo / "index.json.sig").write_text(base64.b64encode(raw_signature.read_bytes()).decode() + "\n")
     raw_signature.unlink()
-    return "published", f"Automated checks passed and {pid}@{version} was published.", pr
+    return "published", f"Automated checks passed and {kind} {pid}@{version} was published.", pr
 
 
 def main() -> None:
@@ -203,7 +220,7 @@ def main() -> None:
         approval_note=args.approval_note,
     )
     if disposition == "published":
-        git(repo, ["add", "index.json", "index.json.sig", "packages", "audits"])
+        git(repo, ["add", "index.json", "index.json.sig", "packages", "themes", "audits"])
         if subprocess.run(
             ["git", "-c", "core.hooksPath=/dev/null", "-C", str(repo), "diff", "--cached", "--quiet"]
         ).returncode != 0:

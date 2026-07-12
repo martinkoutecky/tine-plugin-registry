@@ -1,0 +1,67 @@
+{
+  "aiReview": {
+    "areasReviewed": [
+      "manifest identity and deterministic-report consistency",
+      "literal color allowlist and inert execution model",
+      "manifest/source correspondence",
+      "malicious or deceptive behavior",
+      "dependency and build-script risk",
+      "denial of service and hidden data channels",
+      "license, attribution, and provenance",
+      "unsupported claims",
+      "graph transformation safety",
+      "protocol abuse"
+    ],
+    "disposition": "pass",
+    "findings": [
+      {
+        "evidence": "Dependency metadata, release workflow, CSS, and Sass occur only under declared-ported-source@3f0f55527feb1edba3592aa4023e2520e8332567; theme/theme.json contains only metadata and literal semantic colors.",
+        "impact": "The upstream dependency and workflow surface does not execute when this strict color-only Tine theme is installed.",
+        "severity": "info",
+        "title": "Upstream build machinery is not part of the installable theme"
+      },
+      {
+        "evidence": "The light and dark primary, secondary, tertiary, and quaternary backgrounds, text colors, active/link colors, guideline/bullet colors, highlight colors, and mark colors correspond to literal values or direct variable resolutions in the pinned upstream _theme_light.scss and _theme_dark.scss files. The included MIT license matches upstream.",
+        "impact": "The color-port and licensing claims are adequately substantiated.",
+        "severity": "info",
+        "title": "Palette provenance is supported"
+      }
+    ],
+    "schemaVersion": 1,
+    "summary": "The submitted theme is inert color-only data whose manifest identity matches the deterministic report. All mode entries are literal hex, rgb, or rgba colors, and the selected palette values are supported by the pinned upstream source. No executable code, dependencies, build scripts, graph transformations, protocol operations, or hidden data channels are present in the installable theme. MIT attribution and provenance are consistent with the supplied upstream material.",
+    "uncertain": false
+  },
+  "checker": {
+    "checkedAt": "2026-07-12T22:03:42.052Z",
+    "errors": [],
+    "format": "tine-theme-check/v1",
+    "provenance": {
+      "buildNetwork": "not-applicable",
+      "dependencyFetchHadNoCredentials": true,
+      "manifestLoadedFromThatCheckout": true,
+      "manifestSha256": "ba8456d7b82a1d85ebaa319aba7ac66c50a9b45de085dc210f78732480f8210f",
+      "sourceCommit": "153edbd0e2d9a9ac58cec6b4beb28e5c8fe08efb"
+    },
+    "risk": "low",
+    "sha256": "ba8456d7b82a1d85ebaa319aba7ac66c50a9b45de085dc210f78732480f8210f",
+    "status": "passed",
+    "theme": {
+      "id": "org.tine.theme.dev",
+      "name": "Dev Theme Colors",
+      "version": "1.0.0"
+    },
+    "warnings": []
+  },
+  "commitVerified": "153edbd0e2d9a9ac58cec6b4beb28e5c8fe08efb",
+  "disposition": "publish",
+  "format": "tine-package-audit-result/v1",
+  "submission": {
+    "commit": "153edbd0e2d9a9ac58cec6b4beb28e5c8fe08efb",
+    "kind": "theme",
+    "manifestPath": "theme.json",
+    "packageId": "org.tine.theme.dev",
+    "repository": "https://github.com/martinkoutecky/tine-theme-dev",
+    "schemaVersion": 2,
+    "version": "1.0.0"
+  }
+}

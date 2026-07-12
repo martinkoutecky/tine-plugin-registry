@@ -23,6 +23,18 @@ class AuditorSecurityTests(unittest.TestCase):
             validate_submission({**good, "manifestPath": "../manifest.json"})
         with self.assertRaises(ValueError):
             validate_submission({**good, "repository": "https://github.com/example/repo?upload=1"})
+        theme = {
+            "schemaVersion": 2,
+            "kind": "theme",
+            "packageId": "org.tine.theme.example",
+            "version": "1.0.0",
+            "repository": "https://github.com/example/tine-theme-example",
+            "commit": "b" * 40,
+            "manifestPath": "theme.json",
+        }
+        self.assertEqual(validate_submission(theme), theme)
+        with self.assertRaises(ValueError):
+            validate_submission({**theme, "manifestPath": "manifest.json"})
 
     def test_source_tree_rejects_symlinks_before_host_reads(self):
         with tempfile.TemporaryDirectory() as temp:

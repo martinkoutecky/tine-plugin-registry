@@ -11,7 +11,9 @@ import subprocess
 import tempfile
 import tomllib
 from codex_review import review
-from validation import validate_manifest_identity, validate_source_tree, validate_submission
+from validation import (
+    submission_kind, validate_manifest_identity, validate_source_tree, validate_submission,
+)
 
 
 def canonical(value: object) -> bytes:
@@ -72,6 +74,51 @@ def locked_sdk_source(plugin_root: pathlib.Path, temp: pathlib.Path) -> list[tup
     return [(f"locked-tine-plugin-sdk@{commit}", sdk)] if sdk.is_dir() else []
 
 
+def pinned_port_source(manifest: dict, temp: pathlib.Path) -> list[tuple[str, pathlib.Path]]:
+    """Fetch declared port evidence as inert review input; never build or execute it."""
+    port = manifest.get("portedFrom")
+    if not isinstance(port, dict):
+        return []
+    source, revision = port.get("source"), port.get("revision")
+    if (
+        not isinstance(source, str)
+        or not source.startswith("https://github.com/")
+        or not isinstance(revision, str)
+        or len(revision) != 40
+        or any(char not in "0123456789abcdef" for char in revision)
+    ):
+        return []
+    checkout = temp / "ported-source"
+    safe_git(["clone", "--filter=blob:none", "--no-checkout", source, str(checkout)])
+    safe_git(["-C", str(checkout), "fetch", "--depth=1", "origin", revision])
+    safe_git(["-C", str(checkout), "checkout", "--detach", revision])
+    actual = safe_git(["-C", str(checkout), "rev-parse", "HEAD"], capture_output=True).stdout.strip()
+    if actual != revision:
+        raise RuntimeError("ported source did not resolve to the declared revision")
+    evidence = temp / "ported-evidence"
+    evidence.mkdir()
+    copied_bytes = 0
+    for path in sorted(checkout.rglob("*")):
+        if path.is_symlink() or not path.is_file() or ".git" in path.relative_to(checkout).parts:
+            continue
+        name = path.name.lower()
+        relevant = (
+            path.suffix.lower() in {".css", ".scss"}
+            or name in {"license", "copying", "notice", "manifest.json", "package.json"}
+            or name.startswith("readme")
+        )
+        if not relevant:
+            continue
+        size = path.stat().st_size
+        if copied_bytes + size > 400_000:
+            raise RuntimeError("declared port evidence exceeds the review limit")
+        destination = evidence / path.relative_to(checkout)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(path, destination)
+        copied_bytes += size
+    return [(f"declared-ported-source@{revision}", evidence)]
+
+
 def audit(submission_path: pathlib.Path, tine: pathlib.Path, image: str, max_source: int) -> dict:
     submission = validate_submission(json.loads(submission_path.read_text()))
     with tempfile.TemporaryDirectory(prefix="tine-plugin-audit-") as temp:
@@ -92,6 +139,50 @@ def audit(submission_path: pathlib.Path, tine: pathlib.Path, image: str, max_sou
             raise RuntimeError("manifest path is not a regular file")
         plugin_root = manifest_path.parent
         manifest = validate_manifest_identity(json.loads(manifest_path.read_text()), submission)
+        kind = submission_kind(submission)
+        if kind == "theme":
+            completed = subprocess.run(
+                ["node", str(tine / "scripts/tine-theme.mjs"), "check", str(plugin_root), "--json"],
+                capture_output=True, text=True, check=False,
+            )
+            if not completed.stdout.strip():
+                raise RuntimeError(f"theme checker produced no report: {completed.stderr[:500]}")
+            checker = json.loads(completed.stdout)
+            checker["risk"] = "low"
+            checker["provenance"] = {
+                "sourceCommit": actual,
+                "manifestLoadedFromThatCheckout": True,
+                "dependencyFetchHadNoCredentials": True,
+                "buildNetwork": "not-applicable",
+                "manifestSha256": checker.get("sha256"),
+            }
+            port_sources = pinned_port_source(manifest, temp_path)
+            ai = review(
+                plugin_root, checker,
+                pathlib.Path(__file__).parents[1] / "schemas" / "audit.schema.json",
+                max_source, extra_sources=port_sources, kind="theme",
+            )
+            deterministic_pass = checker.get("status") == "passed"
+            if not deterministic_pass:
+                disposition = "quarantine"
+            elif ai["disposition"] == "reject":
+                disposition = "reject"
+            elif ai["disposition"] == "pass" and not ai["uncertain"]:
+                disposition = "publish"
+            else:
+                disposition = "quarantine"
+            return {
+                "format": "tine-package-audit-result/v1",
+                "submission": submission,
+                "commitVerified": actual,
+                "checker": checker,
+                "aiReview": ai,
+                "disposition": disposition,
+                "package": {
+                    "manifest": manifest,
+                    "manifestSha256": hashlib.sha256(canonical(manifest)).hexdigest(),
+                },
+            }
         entry_rel = manifest.get("entry")
         if not isinstance(entry_rel, str):
             raise RuntimeError("plugin manifest entry is invalid")
@@ -131,6 +222,7 @@ def audit(submission_path: pathlib.Path, tine: pathlib.Path, image: str, max_sou
             pathlib.Path(__file__).parents[1] / "schemas" / "audit.schema.json",
             max_source,
             extra_sources,
+            kind="plugin",
         )
         deterministic_pass = checker.get("status") == "passed"
         low_risk = checker.get("risk") == "low"

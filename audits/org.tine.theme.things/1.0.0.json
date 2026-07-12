@@ -1,0 +1,66 @@
+{
+  "aiReview": {
+    "areasReviewed": [
+      "malicious intent and deceptive behavior",
+      "manifest/source consistency",
+      "literal semantic-color allowlist safety",
+      "dependency and build-script risk",
+      "denial of service risk",
+      "hidden data channels and external references",
+      "license, attribution, and provenance",
+      "support for package claims",
+      "graph transformation and protocol abuse applicability"
+    ],
+    "disposition": "pass",
+    "findings": [
+      {
+        "evidence": "theme.json references a raw.githubusercontent.com image pinned to the same upstream revision.",
+        "impact": "This is a metadata URL rather than an executable channel. Any network or privacy effect depends on whether the host fetches screenshots, but it does not affect theme execution.",
+        "severity": "info",
+        "title": "External screenshot reference"
+      },
+      {
+        "evidence": "The package includes the upstream MIT license, identifies Colin Eckert and Stephan Ango, pins revision 9b8bef93d3919f7693ac78597beaa35bbbd4cfff, and describes the relationship as source-derived.",
+        "impact": "No material license or provenance problem is apparent from the supplied source bundle.",
+        "severity": "info",
+        "title": "Upstream attribution is preserved"
+      }
+    ],
+    "schemaVersion": 1,
+    "summary": "The package is an inert, color-only theme whose manifest contains literal semantic color values and no executable code, dependencies, or build scripts. The deterministic check passed with matching manifest hashes and checkout provenance. The declared upstream revision, license, authorship, and excluded-feature claims are supported by the bundled upstream material, and the selected palette values are consistent with the pinned source.",
+    "uncertain": false
+  },
+  "checker": {
+    "checkedAt": "2026-07-12T22:04:35.704Z",
+    "errors": [],
+    "format": "tine-theme-check/v1",
+    "provenance": {
+      "buildNetwork": "not-applicable",
+      "dependencyFetchHadNoCredentials": true,
+      "manifestLoadedFromThatCheckout": true,
+      "manifestSha256": "cf368555de003ff18f284a97a68262d22d12e5db140bff78d6883177500963ff",
+      "sourceCommit": "c95b8da06a391a336c0a6833cfbfaa19677a2b74"
+    },
+    "risk": "low",
+    "sha256": "cf368555de003ff18f284a97a68262d22d12e5db140bff78d6883177500963ff",
+    "status": "passed",
+    "theme": {
+      "id": "org.tine.theme.things",
+      "name": "Things Colors",
+      "version": "1.0.0"
+    },
+    "warnings": []
+  },
+  "commitVerified": "c95b8da06a391a336c0a6833cfbfaa19677a2b74",
+  "disposition": "publish",
+  "format": "tine-package-audit-result/v1",
+  "submission": {
+    "commit": "c95b8da06a391a336c0a6833cfbfaa19677a2b74",
+    "kind": "theme",
+    "manifestPath": "theme.json",
+    "packageId": "org.tine.theme.things",
+    "repository": "https://github.com/martinkoutecky/tine-theme-things",
+    "schemaVersion": 2,
+    "version": "1.0.0"
+  }
+}
