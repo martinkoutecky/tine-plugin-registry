@@ -15,7 +15,7 @@ def envelope(plugin_id="page.tine.example"):
         "id": plugin_id,
         "name": "Example",
         "version": "0.1.0",
-        "apiVersion": "0.1",
+        "apiVersion": "0.2",
         "description": "Example plugin",
         "author": "Example",
         "license": "MIT",
@@ -84,6 +84,24 @@ class PublisherSecurityTests(unittest.TestCase):
         self.assertRegex(version["audit"]["sha256"], r"^[0-9a-f]{64}$")
         self.assertEqual(version["audit"]["risk"], "low")
         self.assertFalse(version["audit"]["manualApproval"])
+
+    def test_local_publish_lifecycle_produces_a_verifiable_signed_index(self):
+        self.key.chmod(0o600)
+        self.assertEqual(publish(self.write_envelope(envelope()), self.repo, self.key)[0], "published")
+        public_key = self.root / "key.pub.pem"
+        subprocess.run(
+            ["openssl", "pkey", "-in", str(self.key), "-pubout", "-out", str(public_key)],
+            check=True,
+        )
+        signature = self.root / "signature.raw"
+        signature.write_bytes(base64.b64decode((self.repo / "index.json.sig").read_text().strip(), validate=True))
+        subprocess.run(
+            [
+                "openssl", "pkeyutl", "-verify", "-pubin", "-inkey", str(public_key),
+                "-rawin", "-in", str(self.repo / "index.json"), "-sigfile", str(signature),
+            ],
+            check=True,
+        )
 
     def test_publisher_rejects_traversal_and_tampered_bytes_before_writing(self):
         bad_path = envelope("../../outside")

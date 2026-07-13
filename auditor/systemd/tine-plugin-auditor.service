@@ -4,7 +4,7 @@ After=network-online.target
 
 [Service]
 Type=oneshot
-Environment=CODEX_BIN=/home/koutecky/bin/codex
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
 ExecStart=/usr/bin/python3 /aux/koutecky/logseq/tine-plugin-registry/auditor/daemon.py --once --config /aux/koutecky/logseq/tine-plugin-registry/auditor/config.local.toml
 NoNewPrivileges=true
 PrivateTmp=true

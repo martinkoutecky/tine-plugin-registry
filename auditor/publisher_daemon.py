@@ -12,6 +12,8 @@ import sys
 import tempfile
 import tomllib
 
+from publisher import private_file
+
 
 def secure_dir(path: pathlib.Path) -> pathlib.Path:
     path.mkdir(parents=True, exist_ok=True)
@@ -78,7 +80,10 @@ def main() -> None:
     parser.add_argument("--once", action="store_true")
     parser.add_argument("--config", type=pathlib.Path, required=True)
     args = parser.parse_args()
+    private_file(args.config, "publisher config")
     config = tomllib.loads(args.config.read_text())
+    private_file(pathlib.Path(config["signing_key"]), "registry signing key")
+    private_file(pathlib.Path(config["github_app_private_key"]), "GitHub App private key")
     config["config_path"] = str(args.config.resolve())
     failures = run_once(config)
     if failures:

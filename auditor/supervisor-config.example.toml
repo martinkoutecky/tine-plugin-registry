@@ -1,0 +1,7 @@
+auditor_config = "/aux/koutecky/logseq/tine-plugin-registry/auditor/config.local.toml"
+publisher_config = "/aux/koutecky/logseq/tine-plugin-registry/auditor/publisher-config.local.toml"
+state_root = "/home/koutecky/.local/state/tine-plugin-auditor"
+auditor_interval_seconds = 300
+publisher_interval_seconds = 120
+auditor_timeout_seconds = 2100
+publisher_timeout_seconds = 300

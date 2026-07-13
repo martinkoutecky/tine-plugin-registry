@@ -5,3 +5,4 @@ __pycache__/
 auditor/config.local.toml
 auditor/publisher-config.local.toml
 auditor/crontab.local
+auditor/supervisor-config.local.toml

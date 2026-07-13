@@ -38,8 +38,21 @@ unprivileged user namespaces are enabled. The auditor refuses executable submiss
 when neither isolation backend is usable; it never falls back to a host build.
 
 Install the two user-level service/timer files only after assigning a narrow
-publisher credential. Never give a public-PR workflow
-access to this machine or mount the Podman socket into a build.
+publisher credential. Never give a public-PR workflow access to this machine or
+mount the Podman socket into a build. On a long-running environment without cron
+or systemd, use the checked-in supervisor instead; it keeps the two schedules
+independent, holds a single-instance lock, survives the launching shell, and writes
+credential-free health state:
+
+```sh
+cp auditor/supervisor-config.example.toml auditor/supervisor-config.local.toml
+python3 auditor/operations.py start --config auditor/supervisor-config.local.toml
+python3 auditor/operations.py status --config auditor/supervisor-config.local.toml
+```
+
+The supervisor does not invent a boot facility. Where the environment itself is
+recreated or rebooted, arrange for the `start` command above to run at login, or use
+the systemd timers. A running but stale or failed worker makes `status` exit nonzero.
 
 The publisher GitHub App needs only repository `Contents: read/write` and `Pull
 requests: read/write`, and must be installed only on `tine-plugin-registry`.
@@ -62,9 +75,10 @@ installation-token repository scope and create the local configuration with:
 python3 auditor/configure_publisher.py
 ```
 
-Then schedule
-`publisher_daemon.py --once` under a separate lock. It creates short-lived
-installation tokens on demand; there is no PAT to retain or rotate. Each cycle
+Then schedule `publisher_daemon.py --once` under a separate lock, or start the
+supervisor above. It validates the mode-600 configuration and keys every cycle
+and creates short-lived installation tokens on demand; there is no PAT to retain
+or rotate. Each cycle
 atomically updates `~/.local/state/tine-plugin-auditor/publisher-status.json`
 with only its timestamp and aggregate pending/published/quarantined/failure
 counts, so the schedule is observable without logging credentials or source.
@@ -81,5 +95,6 @@ checked-in cron and systemd examples keep the credential-free auditor and
 privileged publisher in separate processes.
 
 The checked-in `registry-ed25519.pub.pem` is the dedicated registry identity. The
-private key stays mode-600 outside every repository. Tine must verify `index.json.sig`
-before it trusts catalogue metadata or revocations.
+private key stays mode-600 at
+`~/.local/share/tine-plugin-registry/registry-ed25519.pem`, outside every repository.
+Tine must verify `index.json.sig` before it trusts catalogue metadata or revocations.

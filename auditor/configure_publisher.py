@@ -16,7 +16,7 @@ REPOSITORY = "martinkoutecky/tine-plugin-registry"
 EXPECTED_SLUG = "tine-plugin-registry-publisher"
 EXPECTED_PERMISSIONS = {"contents": "write", "pull_requests": "write", "metadata": "read"}
 DEFAULT_CONFIG = pathlib.Path(__file__).with_name("publisher-config.local.toml")
-SIGNING_KEY = pathlib.Path.home() / ".config/tine-plugin-auditor/registry-ed25519.pem"
+SIGNING_KEY = pathlib.Path.home() / ".local/share/tine-plugin-registry/registry-ed25519.pem"
 STATE_ROOT = pathlib.Path.home() / ".local/state/tine-plugin-auditor"
 
 
