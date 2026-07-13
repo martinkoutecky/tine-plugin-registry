@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 2,
+  "kind": "theme",
+  "packageId": "org.tine.theme.dev",
+  "version": "1.0.1",
+  "repository": "https://github.com/martinkoutecky/tine-theme-dev",
+  "commit": "03277ab6c7001f0cfbf7c82ea9e9487fc62ee92d",
+  "manifestPath": "theme.json"
+}
