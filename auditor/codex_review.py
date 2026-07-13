@@ -89,7 +89,13 @@ UNTRUSTED SOURCE BUNDLE:
             "HOME": os.environ.get("HOME", str(pathlib.Path.home())),
             "LANG": "C.UTF-8",
         }
-        subprocess.run(command, input=prompt, text=True, check=True, env=env, cwd=temp, timeout=900)
+        # Codex's interactive transcript includes the complete hostile source
+        # prompt. Never copy that into an unattended service log: the signed JSON
+        # output is the only review artifact the publisher consumes.
+        subprocess.run(
+            command, input=prompt, text=True, check=True, env=env, cwd=temp, timeout=900,
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
         value = json.loads(output.read_text())
         if value.get("schemaVersion") != 1 or value.get("disposition") not in {"pass", "quarantine", "reject"}:
             raise RuntimeError("Codex returned an invalid review envelope")
