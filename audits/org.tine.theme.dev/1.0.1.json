@@ -1,0 +1,73 @@
+{
+  "aiReview": {
+    "areasReviewed": [
+      "malicious intent and deceptive behavior",
+      "manifest/source consistency",
+      "literal color allowlist compliance",
+      "dependency and build-script risk",
+      "denial of service",
+      "hidden data channels and remote references",
+      "license and provenance",
+      "source-supported claims",
+      "graph transformation safety",
+      "protocol abuse"
+    ],
+    "disposition": "pass",
+    "findings": [
+      {
+        "evidence": "The manifest pins Logseq Dev Theme revision 3f0f55527feb1edba3592aa4023e2520e8332567, identifies Peng Xiao, and declares MIT; the packaged LICENSE matches the pinned upstream MIT license.",
+        "impact": "The source-derived palette is attributed and distributed under a compatible license.",
+        "severity": "info",
+        "title": "Upstream attribution and license are consistent"
+      },
+      {
+        "evidence": "theme.json contains light and dark mappings made exclusively of literal hex, rgb, and rgba color values; it contains no CSS, scripts, dependencies, graph operations, or protocol handlers.",
+        "impact": "The host's strict semantic-token and literal-color allowlist prevents execution of the upstream CSS and its remote font imports.",
+        "severity": "info",
+        "title": "Theme remains within the inert color-only model"
+      },
+      {
+        "evidence": "The README and description explicitly exclude typography, spacing, layout, PDF rules, plugin selectors, and bullet threading. None of those upstream behaviors appear in theme.json.",
+        "impact": "Users are not misled into expecting the package to execute or reproduce non-color upstream functionality.",
+        "severity": "info",
+        "title": "Manifest and documented scope align"
+      }
+    ],
+    "schemaVersion": 1,
+    "summary": "The package is inert theme data containing only literal semantic color assignments. Its manifest matches the deterministic report hash, its light and dark values are supported by the pinned upstream source, and the stated exclusions of CSS, fonts, layout, and bullet threading are reflected in the package. No malicious behavior, executable build path, dependencies, hidden data channel, denial-of-service mechanism, or material provenance issue was identified.",
+    "uncertain": false
+  },
+  "checker": {
+    "checkedAt": "2026-07-13T17:18:48.303Z",
+    "errors": [],
+    "format": "tine-theme-check/v1",
+    "provenance": {
+      "buildNetwork": "not-applicable",
+      "dependencyFetchHadNoCredentials": true,
+      "manifestLoadedFromThatCheckout": true,
+      "manifestSha256": "a13c0ca8a58368c1b5a0869325d1b09f20feedae77967c15155b4cab48111a0e",
+      "sourceCommit": "03277ab6c7001f0cfbf7c82ea9e9487fc62ee92d"
+    },
+    "risk": "low",
+    "sha256": "a13c0ca8a58368c1b5a0869325d1b09f20feedae77967c15155b4cab48111a0e",
+    "status": "passed",
+    "theme": {
+      "id": "org.tine.theme.dev",
+      "name": "Dev Theme Colors",
+      "version": "1.0.1"
+    },
+    "warnings": []
+  },
+  "commitVerified": "03277ab6c7001f0cfbf7c82ea9e9487fc62ee92d",
+  "disposition": "publish",
+  "format": "tine-package-audit-result/v1",
+  "submission": {
+    "commit": "03277ab6c7001f0cfbf7c82ea9e9487fc62ee92d",
+    "kind": "theme",
+    "manifestPath": "theme.json",
+    "packageId": "org.tine.theme.dev",
+    "repository": "https://github.com/martinkoutecky/tine-theme-dev",
+    "schemaVersion": 2,
+    "version": "1.0.1"
+  }
+}

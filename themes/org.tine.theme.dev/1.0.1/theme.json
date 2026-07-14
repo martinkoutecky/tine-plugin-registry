@@ -1,0 +1,72 @@
+{
+  "aiDevelopment": "primary",
+  "apiVersion": "0.1",
+  "author": "Sol for Tine",
+  "description": "A color-only Tine port of Logseq Dev Theme's light and dark palettes. Fonts, layout, and bullet-threading CSS are intentionally excluded.",
+  "id": "org.tine.theme.dev",
+  "license": "MIT",
+  "modes": {
+    "dark": {
+      "--ls-active-primary-color": "#a3cef1",
+      "--ls-block-bullet-color": "#38434c",
+      "--ls-block-highlight-color": "#32445a",
+      "--ls-border-color": "#38434c",
+      "--ls-guideline-color": "#38434c",
+      "--ls-link-text-color": "#a3cef1",
+      "--ls-link-text-hover-color": "#6096ba",
+      "--ls-page-inline-code-bg-color": "#313942",
+      "--ls-page-inline-code-color": "#a3cef1",
+      "--ls-page-mark-bg-color": "#d3a400",
+      "--ls-page-mark-color": "#000000",
+      "--ls-primary-background-color": "#272c35",
+      "--ls-primary-text-color": "rgb(235, 235, 235)",
+      "--ls-quaternary-background-color": "#404b55",
+      "--ls-secondary-background-color": "#313942",
+      "--ls-secondary-text-color": "rgb(200, 200, 200)",
+      "--ls-selection-background-color": "rgba(163, 206, 241, 0.25)",
+      "--ls-tag-text-color": "#a3cef1",
+      "--ls-tertiary-background-color": "#38434c",
+      "--ls-title-text-color": "#ffffff"
+    },
+    "light": {
+      "--ls-active-primary-color": "#106ba3",
+      "--ls-block-bullet-color": "#e9ecef",
+      "--ls-block-highlight-color": "#e9ecef",
+      "--ls-border-color": "#e9ecef",
+      "--ls-guideline-color": "#e9ecef",
+      "--ls-link-text-color": "#106ba3",
+      "--ls-link-text-hover-color": "#004174",
+      "--ls-page-inline-code-bg-color": "#f8f9fa",
+      "--ls-page-inline-code-color": "#106ba3",
+      "--ls-page-mark-bg-color": "#ffc600",
+      "--ls-page-mark-color": "#000000",
+      "--ls-primary-background-color": "#ffffff",
+      "--ls-primary-text-color": "rgb(40, 40, 40)",
+      "--ls-quaternary-background-color": "#dee2e6",
+      "--ls-secondary-background-color": "#f8f9fa",
+      "--ls-secondary-text-color": "#161e2e",
+      "--ls-selection-background-color": "rgba(16, 107, 163, 0.25)",
+      "--ls-tag-text-color": "#106ba3",
+      "--ls-tertiary-background-color": "#e9ecef",
+      "--ls-title-text-color": "rgb(40, 40, 40)"
+    }
+  },
+  "name": "Dev Theme Colors",
+  "portedFrom": {
+    "authors": [
+      "Peng Xiao"
+    ],
+    "ecosystem": "logseq",
+    "license": "MIT",
+    "name": "Logseq Dev Theme",
+    "relationship": "source-derived",
+    "revision": "3f0f55527feb1edba3592aa4023e2520e8332567",
+    "source": "https://github.com/pengx17/logseq-dev-theme"
+  },
+  "schemaVersion": 1,
+  "screenshots": [
+    "https://raw.githubusercontent.com/martinkoutecky/tine-theme-dev/84d349433a44a966089bbf683632c8a327705a6f/docs/tine-dev-colors.png"
+  ],
+  "source": "https://github.com/martinkoutecky/tine-theme-dev",
+  "version": "1.0.1"
+}
