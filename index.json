@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-14T21:46:01.517772+00:00",
+  "generatedAt": "2026-07-14T21:46:03.449860+00:00",
   "plugins": [
     {
       "aiDevelopment": "primary",
@@ -273,6 +273,26 @@
           ],
           "publishedAt": "2026-07-12T22:06:25.257307+00:00",
           "version": "1.0.0"
+        },
+        {
+          "apiVersion": "0.1",
+          "audit": {
+            "automatedDisposition": "publish",
+            "checkedAt": "2026-07-13T17:18:48.340Z",
+            "manualApproval": false,
+            "risk": "low",
+            "sha256": "02406bf8c7e0da0d7f61280cb17d1803f6f6ca9c0a3ea1a09b2f81f4800eef1a",
+            "status": "passed",
+            "url": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/audits/org.tine.theme.things/1.0.1.json"
+          },
+          "manifestSha256": "c6c9a0d2b328a97cd9f28951049522c56bcc2a978b1d0243f0eae429267421ab",
+          "manifestUrl": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/themes/org.tine.theme.things/1.0.1/theme.json",
+          "modes": [
+            "dark",
+            "light"
+          ],
+          "publishedAt": "2026-07-14T21:46:03.449844+00:00",
+          "version": "1.0.1"
         }
       ]
     }

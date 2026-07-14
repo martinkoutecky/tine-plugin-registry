@@ -1,0 +1,53 @@
+{
+  "aiReview": {
+    "areasReviewed": [
+      "Manifest identity and deterministic-check consistency",
+      "Literal color allowlist compatibility",
+      "Manifest/source and palette provenance",
+      "Malicious or deceptive behavior",
+      "Dependencies and build scripts",
+      "Denial-of-service and hidden-channel risk",
+      "License and attribution",
+      "Unsupported claims",
+      "Graph transformation and protocol abuse"
+    ],
+    "disposition": "pass",
+    "findings": [],
+    "schemaVersion": 1,
+    "summary": "The package is an inert, color-only theme whose manifest identity matches the deterministic report. All theme assignments are literal hex or rgba colors, with no executable CSS, scripts, dependencies, graph transformations, or protocol handlers in the installable package. The selected palette is supported by the pinned upstream source, and the included MIT license matches upstream.",
+    "uncertain": false
+  },
+  "checker": {
+    "checkedAt": "2026-07-13T17:18:48.340Z",
+    "errors": [],
+    "format": "tine-theme-check/v1",
+    "provenance": {
+      "buildNetwork": "not-applicable",
+      "dependencyFetchHadNoCredentials": true,
+      "manifestLoadedFromThatCheckout": true,
+      "manifestSha256": "c7e159de0e9631cc8fbe735ebfc37eb668637bbdf969e6bee3a7b1efef2bff10",
+      "sourceCommit": "1c5e75360972af1c0f3f745771503e2319a89b15"
+    },
+    "risk": "low",
+    "sha256": "c7e159de0e9631cc8fbe735ebfc37eb668637bbdf969e6bee3a7b1efef2bff10",
+    "status": "passed",
+    "theme": {
+      "id": "org.tine.theme.things",
+      "name": "Things Colors",
+      "version": "1.0.1"
+    },
+    "warnings": []
+  },
+  "commitVerified": "1c5e75360972af1c0f3f745771503e2319a89b15",
+  "disposition": "publish",
+  "format": "tine-package-audit-result/v1",
+  "submission": {
+    "commit": "1c5e75360972af1c0f3f745771503e2319a89b15",
+    "kind": "theme",
+    "manifestPath": "theme.json",
+    "packageId": "org.tine.theme.things",
+    "repository": "https://github.com/martinkoutecky/tine-theme-things",
+    "schemaVersion": 2,
+    "version": "1.0.1"
+  }
+}
