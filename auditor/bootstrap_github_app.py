@@ -13,14 +13,23 @@ import secrets
 import threading
 import urllib.parse
 import urllib.request
+from collections.abc import Mapping
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 
 APP_NAME = "Tine Plugin Registry Publisher"
 APP_HOMEPAGE = "https://github.com/martinkoutecky/tine-plugin-registry"
-KEY_PATH = pathlib.Path.home() / ".config/tine-plugin-auditor/github-app.pem"
-METADATA_PATH = pathlib.Path.home() / ".config/tine-plugin-auditor/github-app.json"
 SLUG = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,98}[a-z0-9])?$")
+
+
+def private_root(environment: Mapping[str, str] = os.environ) -> pathlib.Path:
+    fallback = pathlib.Path.home() / ".local/share/tine-plugin-registry"
+    return pathlib.Path(environment.get("TINE_PLUGIN_PRIVATE_ROOT", str(fallback))).expanduser()
+
+
+PRIVATE_ROOT = private_root()
+KEY_PATH = PRIVATE_ROOT / "github-app.pem"
+METADATA_PATH = PRIVATE_ROOT / "github-app.json"
 
 
 def app_manifest(redirect_url: str) -> dict:

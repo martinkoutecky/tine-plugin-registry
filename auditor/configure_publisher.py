@@ -5,9 +5,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import pathlib
 
-from bootstrap_github_app import KEY_PATH, METADATA_PATH, write_new_private_file
+from bootstrap_github_app import KEY_PATH, METADATA_PATH, PRIVATE_ROOT, write_new_private_file
 from github_app import app_jwt, github_json, installation_credentials
 from publisher import private_file
 
@@ -16,8 +17,10 @@ REPOSITORY = "martinkoutecky/tine-plugin-registry"
 EXPECTED_SLUG = "tine-plugin-registry-publisher"
 EXPECTED_PERMISSIONS = {"contents": "write", "pull_requests": "write", "metadata": "read"}
 DEFAULT_CONFIG = pathlib.Path(__file__).with_name("publisher-config.local.toml")
-SIGNING_KEY = pathlib.Path.home() / ".local/share/tine-plugin-registry/registry-ed25519.pem"
-STATE_ROOT = pathlib.Path.home() / ".local/state/tine-plugin-auditor"
+SIGNING_KEY = PRIVATE_ROOT / "registry-ed25519.pem"
+STATE_ROOT = pathlib.Path(
+    os.environ.get("TINE_PLUGIN_AUDITOR_STATE_ROOT", str(PRIVATE_ROOT / "state"))
+).expanduser()
 
 
 def exact_permissions(value: object, where: str) -> None:

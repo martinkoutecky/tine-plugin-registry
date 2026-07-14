@@ -56,6 +56,22 @@ the systemd timers. A running but stale or failed worker makes `status` exit non
 
 The publisher GitHub App needs only repository `Contents: read/write` and `Pull
 requests: read/write`, and must be installed only on `tine-plugin-registry`.
+First choose one persistent private root. It must be outside every Git worktree,
+owned by the service user, and mode 700. Container deployments must point this at
+a host-backed mount rather than the container's home directory. For Martin's
+current deployment:
+
+```sh
+export TINE_PLUGIN_PRIVATE_ROOT=/aux/koutecky/logseq/.tine-private/plugin-registry
+install -d -m 700 "$TINE_PLUGIN_PRIVATE_ROOT"
+```
+
+Use this root for the App key, App metadata, registry signing key, and auditor
+state; the helpers create the App files and state directories there. Without the
+environment variable, the portable default is
+`~/.local/share/tine-plugin-registry`; do not use that default when home is
+ephemeral.
+
 The loopback-only manifest helper removes the error-prone key download and App-ID
 copying steps:
 
@@ -79,7 +95,7 @@ Then schedule `publisher_daemon.py --once` under a separate lock, or start the
 supervisor above. It validates the mode-600 configuration and keys every cycle
 and creates short-lived installation tokens on demand; there is no PAT to retain
 or rotate. Each cycle
-atomically updates `~/.local/state/tine-plugin-auditor/publisher-status.json`
+atomically updates `$TINE_PLUGIN_PRIVATE_ROOT/state/publisher-status.json`
 with only its timestamp and aggregate pending/published/quarantined/failure
 counts, so the schedule is observable without logging credentials or source.
 
@@ -96,5 +112,5 @@ privileged publisher in separate processes.
 
 The checked-in `registry-ed25519.pub.pem` is the dedicated registry identity. The
 private key stays mode-600 at
-`~/.local/share/tine-plugin-registry/registry-ed25519.pem`, outside every repository.
+`$TINE_PLUGIN_PRIVATE_ROOT/registry-ed25519.pem`, outside every repository.
 Tine must verify `index.json.sig` before it trusts catalogue metadata or revocations.

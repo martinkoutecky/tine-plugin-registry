@@ -2,6 +2,6 @@ registry = "martinkoutecky/tine-plugin-registry"
 tine_checkout = "/aux/koutecky/logseq/tine-plugins"
 builder_image = "localhost/tine-plugin-builder:0.1"
 work_root = "/tmp/tine-plugin-auditor"
-spool_out = "/home/koutecky/.local/state/tine-plugin-auditor/outgoing"
+spool_out = "/path/to/persistent-private-root/state/outgoing"
 poll_seconds = 300
 max_source_bytes = 524288

@@ -4,7 +4,7 @@ import stat
 import tempfile
 import unittest
 
-from bootstrap_github_app import app_manifest, persist_created_app, validate_created_app
+from bootstrap_github_app import app_manifest, persist_created_app, private_root, validate_created_app
 
 
 def result(**updates):
@@ -22,6 +22,12 @@ def result(**updates):
 
 
 class BootstrapGithubAppTests(unittest.TestCase):
+    def test_private_root_can_target_a_host_backed_mount(self):
+        self.assertEqual(
+            private_root({"TINE_PLUGIN_PRIVATE_ROOT": "/aux/private/tine"}),
+            pathlib.Path("/aux/private/tine"),
+        )
+
     def test_manifest_requests_only_the_narrow_noninteractive_app(self):
         manifest = app_manifest("http://127.0.0.1:1234/callback/secret")
         self.assertEqual(manifest["default_permissions"], {"contents": "write", "pull_requests": "write"})
