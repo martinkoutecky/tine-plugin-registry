@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import pathlib
+import re
 import shutil
 import subprocess
 import tempfile
@@ -133,17 +134,82 @@ PORT_EVIDENCE_LIMIT = 400_000
 PORT_EVIDENCE_MAX_FILES = 200
 
 
+# Narrowing a large theme upstream reads at most this much to find the defining files.
+PORT_EVIDENCE_SCAN_MAX_FILES = 3000
+PORT_EVIDENCE_SCAN_LIMIT = 30_000_000
+
+
+def port_evidence_is_metadata(path: pathlib.PurePath) -> bool:
+    name = path.name.lower()
+    stem = name.split(".", 1)[0]
+    return stem in {"license", "licence", "copying", "notice"} or name in {"manifest.json", "package.json"} or name.startswith("readme")
+
+
 def port_evidence_path_relevant(path: pathlib.Path, kind: str) -> bool:
     """Keep theme evidence focused on authored styling, not whole application bundles."""
     name = path.name.lower()
-    metadata = name in {"license", "copying", "notice", "manifest.json", "package.json"} or name.startswith("readme")
-    if metadata:
+    if port_evidence_is_metadata(path):
         return True
     if kind == "theme":
         if ".bundle." in name or ".min." in name:
             return False
         return path.suffix.lower() in {".css", ".scss", ".sass", ".less"}
     return path.suffix.lower() in {".css", ".scss", ".js", ".ts", ".tsx"}
+
+
+def theme_custom_properties(manifest: object) -> set[str]:
+    """Every CSS custom property name (`--x`) the theme manifest sets, at any depth."""
+    names: set[str] = set()
+    stack = [manifest]
+    while stack:
+        value = stack.pop()
+        if isinstance(value, dict):
+            names.update(key for key in value if isinstance(key, str) and key.startswith("--"))
+            stack.extend(value.values())
+        elif isinstance(value, list):
+            stack.extend(value)
+    return names
+
+
+CUSTOM_PROPERTY_DECLARATION = re.compile(r"(--[A-Za-z0-9_-]+)\s*:")
+
+
+def defines_custom_property(text: str, names: set[str]) -> bool:
+    return any(match.group(1) in names for match in CUSTOM_PROPERTY_DECLARATION.finditer(text))
+
+
+def narrow_theme_port_evidence(
+    selected: list[tuple[str, str]], names: set[str], read_blob, prefetch,
+) -> list[tuple[str, str]] | None:
+    """For an upstream too large to include whole: its style files that define a custom
+    property the theme sets, plus top-level license/readme metadata. None if that is
+    still over the review limit, or nothing matches."""
+    if not names:
+        return None
+    style = [(rel, blob) for rel, blob in selected if not port_evidence_is_metadata(pathlib.PurePosixPath(rel))]
+    if len(style) > PORT_EVIDENCE_SCAN_MAX_FILES:
+        return None
+    prefetch([blob for _, blob in style])
+    kept: list[tuple[str, str]] = []
+    scanned = 0
+    for rel, blob in sorted(style):
+        data = read_blob(blob)
+        scanned += len(data.encode())
+        if scanned > PORT_EVIDENCE_SCAN_LIMIT:
+            return None
+        if defines_custom_property(data, names):
+            kept.append((rel, data))
+    if not kept:
+        return None
+    top_metadata = sorted(
+        (rel, blob) for rel, blob in selected
+        if "/" not in rel and port_evidence_is_metadata(pathlib.PurePosixPath(rel))
+    )
+    prefetch([blob for _, blob in top_metadata])
+    kept += [(rel, read_blob(blob)) for rel, blob in top_metadata]
+    if len(kept) > PORT_EVIDENCE_MAX_FILES or sum(len(data.encode()) for _, data in kept) > PORT_EVIDENCE_LIMIT:
+        return None
+    return kept
 
 
 def pinned_port_source(manifest: dict, temp: pathlib.Path, kind: str) -> list[tuple[str, pathlib.Path]]:
@@ -189,35 +255,67 @@ def pinned_port_source(manifest: dict, temp: pathlib.Path, kind: str) -> list[tu
         selected.append((rel, blob))
     evidence = temp / "ported-evidence"
     evidence.mkdir()
+    label = f"declared-ported-source@{revision}"
+
+    def read_blob(blob: str) -> str:
+        return safe_git(
+            ["-C", str(checkout), "cat-file", "blob", blob],
+            capture_output=True, timeout=120, errors="replace",
+        ).stdout
+
+    def prefetch(blobs: list[str]) -> None:
+        # One request per chunk instead of a lazy fetch per blob.
+        for start in range(0, len(blobs), 500):
+            safe_git(
+                ["-C", str(checkout), "fetch", "-q", "--no-tags", "--no-write-fetch-head",
+                 "--filter=blob:none", "origin", *blobs[start:start + 500]],
+                timeout=300,
+            )
+
+    def write(files: list[tuple[str, str]]) -> None:
+        for rel, data in files:
+            destination = evidence / rel
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_text(data)
 
     def omitted(reason: str) -> list[tuple[str, pathlib.Path]]:
-        if kind != "theme":
-            raise RuntimeError("declared port evidence exceeds the review limit")
         # A theme is inert colour data: an oversized upstream is reported to the
         # reviewer as unavailable evidence rather than failing the audit closed.
-        shutil.rmtree(evidence)
-        evidence.mkdir()
         (evidence / "PORT-EVIDENCE-OMITTED.txt").write_text(
             f"The declared upstream {source}@{revision} {reason}, over the review limit; "
             "its sources are not included.\n"
         )
-        return [(f"declared-ported-source@{revision}", evidence)]
+        return [(label, evidence)]
 
+    files: list[tuple[str, str]] = []
     if len(selected) > PORT_EVIDENCE_MAX_FILES:
-        return omitted(f"has {len(selected)} relevant files")
-    copied_bytes = 0
-    for rel, blob in sorted(selected):
-        data = safe_git(
-            ["-C", str(checkout), "cat-file", "blob", blob],
-            capture_output=True, timeout=120, errors="replace",
-        ).stdout
-        copied_bytes += len(data.encode())
-        if copied_bytes > PORT_EVIDENCE_LIMIT:
-            return omitted(f"has more than {PORT_EVIDENCE_LIMIT} bytes of relevant files")
-        destination = evidence / rel
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_text(data)
-    return [(f"declared-ported-source@{revision}", evidence)]
+        too_big = f"has {len(selected)} relevant files"
+    else:
+        too_big = ""
+        prefetch([blob for _, blob in selected])
+        copied_bytes = 0
+        for rel, blob in sorted(selected):
+            data = read_blob(blob)
+            copied_bytes += len(data.encode())
+            if copied_bytes > PORT_EVIDENCE_LIMIT:
+                too_big = f"has more than {PORT_EVIDENCE_LIMIT} bytes of relevant files"
+                break
+            files.append((rel, data))
+    if not too_big:
+        write(files)
+        return [(label, evidence)]
+    if kind != "theme":
+        raise RuntimeError("declared port evidence exceeds the review limit")
+    narrowed = narrow_theme_port_evidence(selected, theme_custom_properties(manifest), read_blob, prefetch)
+    if narrowed is None:
+        return omitted(too_big)
+    write(narrowed)
+    (evidence / "PORT-EVIDENCE-NARROWED.txt").write_text(
+        f"The declared upstream {source}@{revision} {too_big}, over the review limit. Included are "
+        f"only its {len(narrowed)} files that define a CSS custom property this theme sets, or are "
+        "top-level license/readme metadata; the rest of the upstream is not included.\n"
+    )
+    return [(label, evidence)]
 
 
 def audit(submission_path: pathlib.Path, tine: pathlib.Path, image: str, max_source: int) -> dict:

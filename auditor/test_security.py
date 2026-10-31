@@ -3,7 +3,9 @@ import tempfile
 import unittest
 
 from codex_review import source_bundle
-from audit import port_evidence_path_relevant
+from audit import (
+    defines_custom_property, narrow_theme_port_evidence, port_evidence_path_relevant, theme_custom_properties,
+)
 from validation import validate_source_tree, validate_submission
 
 
@@ -65,6 +67,25 @@ class AuditorSecurityTests(unittest.TestCase):
         self.assertFalse(port_evidence_path_relevant(pathlib.Path("app.bundle.css"), "theme"))
         self.assertFalse(port_evidence_path_relevant(pathlib.Path("app/graph-view.js"), "theme"))
         self.assertTrue(port_evidence_path_relevant(pathlib.Path("app/graph-view.js"), "plugin"))
+
+    def test_large_theme_upstream_narrows_to_files_defining_the_themes_properties(self):
+        manifest = {"modes": {"dark": {"--ls-primary-background-color": "#002b36"}, "light": {"--ls-link-text-color": "#106ba3"}}}
+        names = theme_custom_properties(manifest)
+        self.assertEqual(names, {"--ls-primary-background-color", "--ls-link-text-color"})
+        self.assertTrue(defines_custom_property(":root { --ls-link-text-color : #000; }", names))
+        self.assertFalse(defines_custom_property("a { color: var(--ls-link-text-color); }", names))
+        blobs = {
+            "b1": ".dark { --ls-primary-background-color: #002b36; }",
+            "b2": "a { color: var(--ls-link-text-color); }",
+            "b3": "AGPL text",
+            "b4": "nested readme",
+        }
+        selected = [("src/vars.css", "b1"), ("src/block.css", "b2"), ("LICENSE.md", "b3"), ("deps/x/README.md", "b4")]
+        fetched = []
+        narrowed = narrow_theme_port_evidence(selected, names, blobs.__getitem__, fetched.extend)
+        self.assertEqual([rel for rel, _ in narrowed], ["src/vars.css", "LICENSE.md"])
+        self.assertIsNone(narrow_theme_port_evidence(selected[1:], names, blobs.__getitem__, fetched.extend))
+        self.assertIsNone(narrow_theme_port_evidence(selected, set(), blobs.__getitem__, fetched.extend))
 
 
 if __name__ == "__main__":
