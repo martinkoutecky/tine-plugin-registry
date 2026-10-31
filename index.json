@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-27T15:20:39.338664+00:00",
+  "generatedAt": "2026-10-31T11:49:06.170336+00:00",
   "plugins": [
     {
       "aiDevelopment": "primary",
@@ -556,6 +556,36 @@
             "light"
           ],
           "publishedAt": "2026-10-27T15:18:25.591325+00:00",
+          "version": "0.1.1"
+        }
+      ]
+    },
+    {
+      "aiDevelopment": "primary",
+      "description": "An independent light and dark Tine color adaptation inspired by the classic Logseq appearance.",
+      "id": "io.github.ellismorrow.theme.logseq-classic",
+      "license": "AGPL-3.0-only",
+      "name": "Logseq Classic · Prism",
+      "source": "https://github.com/EllisMorrow/tine-theme-logseq-classic-prism",
+      "versions": [
+        {
+          "apiVersion": "0.2",
+          "audit": {
+            "automatedDisposition": "quarantine",
+            "checkedAt": "2026-10-31T11:35:12.698Z",
+            "manualApproval": true,
+            "risk": "low",
+            "sha256": "813bf470c68992fbe14a4da77422f5a6bfeaf29956bab07175678b94e8fd8bcd",
+            "status": "passed",
+            "url": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/audits/io.github.ellismorrow.theme.logseq-classic/0.1.1.json"
+          },
+          "manifestSha256": "9669e79307b59a7078dfe08889801a1f9c3c4e1a3152033047121c34cf5fdbac",
+          "manifestUrl": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/themes/io.github.ellismorrow.theme.logseq-classic/0.1.1/theme.json",
+          "modes": [
+            "dark",
+            "light"
+          ],
+          "publishedAt": "2026-10-31T11:49:06.170323+00:00",
           "version": "0.1.1"
         }
       ]

@@ -1,0 +1,76 @@
+{
+  "aiReview": {
+    "areasReviewed": [
+      "Manifest and documentation consistency",
+      "Literal color payload and host execution boundary",
+      "Malicious intent and deceptive behavior",
+      "Dependency and build-script risk",
+      "Denial of service and hidden data channels",
+      "License, attribution, and upstream provenance",
+      "Validation and screenshot claim limitations"
+    ],
+    "disposition": "quarantine",
+    "findings": [
+      {
+        "evidence": "PORT-EVIDENCE-OMITTED.txt states that relevant upstream sources were excluded. The manifest declares a behavioral port from a pinned Logseq revision under AGPL-3.0-only.",
+        "impact": "The palette's upstream correspondence, attribution completeness, and declared upstream license cannot be established from this bundle.",
+        "severity": "medium",
+        "title": "Declared upstream provenance cannot be verified"
+      },
+      {
+        "evidence": "theme.json supplies 21 literal color values per mode. No executable code, dependencies, or build scripts appear in the supplied package; the deterministic checker reports no errors or warnings.",
+        "impact": "Under the stated host allowlist, no execution, graph transformation, protocol abuse, denial-of-service mechanism, or hidden data channel is evident.",
+        "severity": "info",
+        "title": "Theme payload is inert and consistent with documentation"
+      }
+    ],
+    "schemaVersion": 1,
+    "summary": "The supplied theme contains only literal colors and shows no executable payload or malicious behavior. However, omitted upstream evidence prevents verification of the declared port and provenance.",
+    "uncertain": true
+  },
+  "checker": {
+    "checkedAt": "2026-10-31T11:35:12.698Z",
+    "errors": [],
+    "format": "tine-theme-check/v1",
+    "provenance": {
+      "buildNetwork": "not-applicable",
+      "dependencyFetchHadNoCredentials": true,
+      "manifestLoadedFromThatCheckout": true,
+      "manifestSha256": "149ca374b9a5681084cb72643b678bd7431215c60c21972267f3c64cf3267327",
+      "sourceCommit": "dcfcc506dca219c51485291c8aab440edca96fdc"
+    },
+    "risk": "low",
+    "sha256": "149ca374b9a5681084cb72643b678bd7431215c60c21972267f3c64cf3267327",
+    "status": "passed",
+    "theme": {
+      "id": "io.github.ellismorrow.theme.logseq-classic",
+      "name": "Logseq Classic · Prism",
+      "version": "0.1.1"
+    },
+    "warnings": []
+  },
+  "commitVerified": "dcfcc506dca219c51485291c8aab440edca96fdc",
+  "disposition": "quarantine",
+  "format": "tine-package-audit-result/v1",
+  "manualApproval": {
+    "acceptedFindings": [
+      "Declared upstream provenance cannot be verified"
+    ],
+    "approvedAt": "2026-10-31T11:49:06.169320+00:00",
+    "by": "Claude (working on Martin's behalf)",
+    "note": "Inert colour theme (21 literal colours per mode, checker clean); the only medium finding is unverifiable provenance because the declared upstream logseq/logseq exceeds the port-evidence limit and was omitted. Approved by Martin 2026-10-31; same shape as Ayu #15 / Material #16 (D-20261027-TH)."
+  },
+  "pullRequest": {
+    "head": "ece07da2d761a4267ad4d6fa9f786332df5a6de3",
+    "number": 33
+  },
+  "submission": {
+    "commit": "dcfcc506dca219c51485291c8aab440edca96fdc",
+    "kind": "theme",
+    "manifestPath": "theme.json",
+    "packageId": "io.github.ellismorrow.theme.logseq-classic",
+    "repository": "https://github.com/EllisMorrow/tine-theme-logseq-classic-prism",
+    "schemaVersion": 2,
+    "version": "0.1.1"
+  }
+}
