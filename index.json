@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-31T11:49:06.170336+00:00",
+  "generatedAt": "2026-11-18T14:26:02.038283+00:00",
   "plugins": [
     {
       "aiDevelopment": "primary",
@@ -1157,6 +1157,36 @@
           ],
           "publishedAt": "2026-10-27T15:17:12.028788+00:00",
           "version": "0.1.1"
+        }
+      ]
+    },
+    {
+      "aiDevelopment": "primary",
+      "description": "Adwaita surfaces and text, as in GNOME apps, ported from Adwaita for Logseq, with the yellow GNOME accent. Light and dark. For the GNOME layout, add global.css from Details.",
+      "id": "me.cr0cker.adwaita",
+      "license": "MIT",
+      "name": "Adwaita",
+      "source": "https://github.com/CR0CKER/adwaita-for-tine",
+      "versions": [
+        {
+          "apiVersion": "0.2",
+          "audit": {
+            "automatedDisposition": "publish",
+            "checkedAt": "2026-11-18T14:25:05.595Z",
+            "manualApproval": false,
+            "risk": "low",
+            "sha256": "ef162033bccd6fd520c85a44cf0a088265da56967d37fa2433ad961d8f4a075b",
+            "status": "passed",
+            "url": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/audits/me.cr0cker.adwaita/1.0.1.json"
+          },
+          "manifestSha256": "2e03e2fb354ce57fcd1db4720316385be507c0cc54cb5c589979f8368c465d27",
+          "manifestUrl": "https://raw.githubusercontent.com/martinkoutecky/tine-plugin-registry/main/themes/me.cr0cker.adwaita/1.0.1/theme.json",
+          "modes": [
+            "dark",
+            "light"
+          ],
+          "publishedAt": "2026-11-18T14:26:02.038238+00:00",
+          "version": "1.0.1"
         }
       ]
     },

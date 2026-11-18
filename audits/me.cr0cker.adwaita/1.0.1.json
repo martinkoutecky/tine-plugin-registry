@@ -1,0 +1,80 @@
+{
+  "aiReview": {
+    "areasReviewed": [
+      "Manifest identity, reported provenance, and literal-color constraints",
+      "Malicious intent and deceptive presentation",
+      "Dependencies, build scripts, and the documented accent generator",
+      "Denial of service and resource use in the inert theme and optional stylesheet",
+      "Remote screenshot URLs and embedded SVG data channels",
+      "License notices, asset provenance, and claims in the README",
+      "Demo graph content and package scope. No plugin entry point, graph transformation, or protocol handler was supplied."
+    ],
+    "disposition": "quarantine",
+    "findings": [
+      {
+        "evidence": "README.md and global.css attribute the precomputed accent values to scripts/accent.py. The README also tells users to run it, but the script is absent from the supplied bundle.",
+        "impact": "The claimed palette derivation and the behavior of the optional script cannot be assessed. Theme installation does not require the script.",
+        "severity": "low",
+        "title": "Documented accent generator is missing"
+      },
+      {
+        "evidence": "global.css embeds six GNOME SVGs. LICENSE lists three by name, omitting pan-end, window-maximize, and window-restore. It gives no exact upstream revision or applicable license text for the GNOME assets. It credits Tabler and identifies MIT, but the full MIT notice in the file names CR0CKER only.",
+        "impact": "The supplied materials leave the origin and redistribution terms of some embedded assets unclear. This concerns distribution of the optional stylesheet.",
+        "severity": "low",
+        "title": "Third-party icon licensing is incompletely documented"
+      },
+      {
+        "evidence": "theme.json lists two remote screenshot URLs pinned to commit 8a15feb8bd25a1933c7fc745b67f16afbcedf743, while the report identifies checked source commit e82a59b0da3f4c36f6af6ea91b38475708d3f45a. The images are absent from the bundle. The README says they show the palette and the separately installed stylesheet together.",
+        "impact": "The images cannot be checked against the advertised appearance. A client that fetches them would make a request to raw.githubusercontent.com. The supplied evidence does not establish whether Tine fetches them.",
+        "severity": "low",
+        "title": "Screenshot contents and presentation are unverified"
+      },
+      {
+        "evidence": "global.css hides the theme toggle, non-close window buttons, and the right sidebar header with its bulk action menu. The README describes these changes and documents the separate CSS installation step. The stylesheet's embedded SVGs contain local path artwork, with no apparent external resource references.",
+        "impact": "Manually applying the stylesheet changes which controls are available across themes on the device. Installing the literal-color theme alone has no such effect.",
+        "severity": "info",
+        "title": "Optional stylesheet deliberately removes interface controls"
+      }
+    ],
+    "schemaVersion": 1,
+    "summary": "The checked Adwaita 1.0.1 manifest matches the reported theme identity and uses only literal colors. No malicious behavior is evident in the inert theme. The bundle leaves the documented accent generator, screenshot contents, and third-party icon licensing unresolved.",
+    "uncertain": true
+  },
+  "checker": {
+    "checkedAt": "2026-11-18T14:25:05.595Z",
+    "errors": [],
+    "format": "tine-theme-check/v1",
+    "provenance": {
+      "buildNetwork": "not-applicable",
+      "dependencyFetchHadNoCredentials": true,
+      "manifestLoadedFromThatCheckout": true,
+      "manifestSha256": "32a88d4d4045941eabf7cbe65948799881ed46822b9db5f568f630793f7cad1d",
+      "sourceCommit": "e82a59b0da3f4c36f6af6ea91b38475708d3f45a"
+    },
+    "risk": "low",
+    "sha256": "32a88d4d4045941eabf7cbe65948799881ed46822b9db5f568f630793f7cad1d",
+    "status": "passed",
+    "theme": {
+      "id": "me.cr0cker.adwaita",
+      "name": "Adwaita",
+      "version": "1.0.1"
+    },
+    "warnings": []
+  },
+  "commitVerified": "e82a59b0da3f4c36f6af6ea91b38475708d3f45a",
+  "disposition": "publish",
+  "format": "tine-package-audit-result/v1",
+  "pullRequest": {
+    "head": "3c35cd50d0fdd3ab2906ac430a2be79803e47ed1",
+    "number": 34
+  },
+  "submission": {
+    "commit": "e82a59b0da3f4c36f6af6ea91b38475708d3f45a",
+    "kind": "theme",
+    "manifestPath": "theme.json",
+    "packageId": "me.cr0cker.adwaita",
+    "repository": "https://github.com/CR0CKER/adwaita-for-tine",
+    "schemaVersion": 2,
+    "version": "1.0.1"
+  }
+}
