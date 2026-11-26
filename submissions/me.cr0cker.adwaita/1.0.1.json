@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 2,
+  "kind": "theme",
+  "packageId": "me.cr0cker.adwaita",
+  "version": "1.0.1",
+  "repository": "https://github.com/CR0CKER/adwaita-for-tine",
+  "commit": "e82a59b0da3f4c36f6af6ea91b38475708d3f45a",
+  "manifestPath": "theme.json"
+}
